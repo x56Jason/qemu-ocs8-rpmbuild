@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 6.2.0
-Release: 6%{?dist}
+Release: 8%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -1909,6 +1909,12 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Apr 28 2023 OpenCloudOS Release Engineering <releng@opencloudos.tech> - 6.2.0-8
+- Rebuilt for OpenCloudOS Stream 23.05
+
+* Fri Mar 31 2023 OpenCloudOS Release Engineering <releng@opencloudos.tech> - 6.2.0-7
+- Rebuilt for OpenCloudOS Stream 23
+
 * Tue Feb 14 2023 cunshunxia <cunshunxia@tencent.com> - 6.2.0-6
 - qemu-kvm require and build qemu-system-x86/qemu-system-riscv
   only on x86/riscv.
