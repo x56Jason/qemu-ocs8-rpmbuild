@@ -80,9 +80,7 @@
 %define requires_ui_opengl %{nil}
 %endif
 %define requires_device_display_virtio_gpu Requires: %{name}-device-display-virtio-gpu = %{evr}
-%define requires_device_display_virtio_gpu_gl Requires: %{name}-device-display-virtio-gpu-gl = %{evr}
 %define requires_device_display_virtio_gpu_pci Requires: %{name}-device-display-virtio-gpu-pci = %{evr}
-%define requires_device_display_virtio_gpu_pci_gl Requires: %{name}-device-display-virtio-gpu-pci-gl = %{evr}
 %define requires_device_display_virtio_gpu_ccw Requires: %{name}-device-display-virtio-gpu-ccw = %{evr}
 %define requires_device_display_virtio_vga Requires: %{name}-device-display-virtio-vga = %{evr}
 %define requires_device_display_virtio_vga_gl Requires: %{name}-device-display-virtio-vga-gl = %{evr}
@@ -124,9 +122,7 @@
 %{requires_device_display_qxl} \
 %{requires_device_display_vhost_user_gpu} \
 %{requires_device_display_virtio_gpu} \
-%{requires_device_display_virtio_gpu_gl} \
 %{requires_device_display_virtio_gpu_pci} \
-%{requires_device_display_virtio_gpu_pci_gl} \
 %{requires_device_display_virtio_vga} \
 %{requires_device_display_virtio_vga_gl} \
 %{requires_device_usb_host} \
@@ -135,8 +131,8 @@
 
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
-Version: 6.2.0
-Release: 8%{?dist}
+Version: 8.0.2
+Release: 1%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -150,9 +146,6 @@ Source6: vhost.conf
 Source7: kvm.conf
 Source8: kvm-s390x.conf
 Source9: kvm-x86.conf
-
-Patch3000: 0001-sgx-stub-fix.patch
-Patch3001: 0001-virtiofsd-Drop-membership-of-all-supplementary-groups.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -198,7 +191,6 @@ BuildRequires: pkgconfig(libdrm)
 BuildRequires: pkgconfig(gbm)
 %endif
 BuildRequires: perl-Test-Harness
-BuildRequires: libslirp-devel
 BuildRequires: libbpf-devel
 
 
@@ -224,7 +216,6 @@ BuildRequires: libtasn1-devel
 %if %{with virgl}
 BuildRequires: virglrenderer-devel
 %endif
-BuildRequires: libxml2-devel
 BuildRequires: libudev-devel
 BuildRequires: pam-devel
 BuildRequires: liburing-devel
@@ -233,6 +224,7 @@ BuildRequires: hostname
 BuildRequires: daxctl-devel
 BuildRequires: fuse-devel
 BuildRequires: fuse3-devel
+BuildRequires: flex bison
 
 BuildRequires: glibc-static pcre-static glib2-static zlib-static
 
@@ -251,6 +243,7 @@ Requires: %{name}-system-riscv = %{version}-%{release}
 Requires: %{name}-user = %{version}-%{release}
 Requires: %{name}-img = %{version}-%{release}
 Requires: %{name}-tools = %{version}-%{release}
+Requires: virtiofsd
 Requires: qemu-pr-helper = %{version}-%{release}
 Requires: vhostuser-backend(fs)
 
@@ -272,6 +265,10 @@ Requires(postun): systemd-units
 %ifnarch aarch64
 Requires: ipxe-roms-qemu >= %{ipxe_version}
 %endif
+Obsoletes: %{name}-device-display-virtio-gpu-gl <= %{version}
+Obsoletes: %{name}-device-display-virtio-gpu-pci-gl <= %{version}
+Obsoletes: %{name}-virtiofsd <= %{version}
+
 
 %description common
 This package provides documentation and auxiliary programs used with %{name}.
@@ -314,16 +311,6 @@ Summary: qemu-pr-helper utility for %{name}
 %description -n qemu-pr-helper
 This package provides the qemu-pr-helper utility that is required for certain
 SCSI features.
-
-%package -n qemu-virtiofsd
-Summary: QEMU virtio-fs shared file system daemon
-Provides: vhostuser-backend(fs)
-
-%description -n qemu-virtiofsd
-This package provides virtiofsd daemon. This program is a vhost-user backend
-that implements the virtio-fs device that is used for sharing a host directory
-tree with a guest.
-
 
 %package tests
 Summary: tests for the %{name} package
@@ -484,26 +471,12 @@ Requires: %{name}-common = %{version}-%{release}
 %description device-display-virtio-gpu
 This package provides the virtio-gpu display device for QEMU.
 
-%package device-display-virtio-gpu-gl
-Summary: QEMU virtio-gpu-gl display device
-Requires: %{name}-common = %{version}-%{release}
-
-%description device-display-virtio-gpu-gl
-This package provides the virtio-gpu-gl display device for QEMU.
-
 %package device-display-virtio-gpu-pci
 Summary: QEMU virtio-gpu-pci display device
 Requires: %{name}-common = %{version}-%{release}
 
 %description device-display-virtio-gpu-pci
 This package provides the virtio-gpu-pci display device for QEMU.
-
-%package device-display-virtio-gpu-pci-gl
-Summary: QEMU virtio-gpu-pci-gl display device
-Requires: %{name}-common = %{version}-%{release}
-
-%description device-display-virtio-gpu-pci-gl
-This package provides the virtio-gpu-pci-gl display device for QEMU.
 
 %package device-display-virtio-gpu-ccw
 Summary: QEMU virtio-gpu-ccw display device
@@ -614,6 +587,22 @@ Requires: edk2-aarch64
 
 %description system-aarch64-core
 This package provides the QEMU system emulator for AArch64.
+%endif
+
+%ifarch loongarch64
+%package system-loongarch64
+Summary: QEMU system emulator for Loongarch64
+Requires: %{name}-system-loongarch64-core = %{version}-%{release}
+
+%description system-Loongarch64
+This package provides the QEMU system emulator for Loongarch64.
+
+%package system-loongarch64-core
+Summary: QEMU system emulator for Loongarch64
+Requires: %{name}-common = %{version}-%{release}
+
+%description system-loongarch64-core
+This package provides the QEMU system emulator for Loongarch64.
 %endif
 
 %if %{with extra_arch}
@@ -938,7 +927,6 @@ mkdir -p %{static_builddir}
   --disable-bsd-user               \\\
   --disable-bzip2                  \\\
   --disable-cap-ng                 \\\
-  --disable-capstone               \\\
   --disable-cfi                    \\\
   --disable-cfi-debug              \\\
   --disable-cloop                  \\\
@@ -947,6 +935,7 @@ mkdir -p %{static_builddir}
   --disable-crypto-afalg           \\\
   --disable-curl                   \\\
   --disable-curses                 \\\
+  --disable-dbus-display           \\\
   --disable-debug-info             \\\
   --disable-debug-mutex            \\\
   --disable-debug-tcg              \\\
@@ -973,7 +962,6 @@ mkdir -p %{static_builddir}
   --disable-libssh                 \\\
   --disable-libudev                \\\
   --disable-libusb                 \\\
-  --disable-libxml2                \\\
   --disable-linux-aio              \\\
   --disable-linux-io-uring         \\\
   --disable-linux-user             \\\
@@ -1006,8 +994,6 @@ mkdir -p %{static_builddir}
   --disable-sdl                    \\\
   --disable-sdl-image              \\\
   --disable-seccomp                \\\
-  --disable-slirp                  \\\
-  --disable-slirp-smbd             \\\
   --disable-smartcard              \\\
   --disable-snappy                 \\\
   --disable-sparse                 \\\
@@ -1023,20 +1009,10 @@ mkdir -p %{static_builddir}
   --disable-user                   \\\
   --disable-vde                    \\\
   --disable-vdi                    \\\
-  --disable-vhost-crypto           \\\
-  --disable-vhost-kernel           \\\
-  --disable-vhost-net              \\\
-  --disable-vhost-scsi             \\\
-  --disable-vhost-user             \\\
-  --disable-vhost-user-blk-server  \\\
-  --disable-vhost-vdpa             \\\
-  --disable-vhost-vsock            \\\
   --disable-virglrenderer          \\\
   --disable-virtfs                 \\\
-  --disable-virtiofsd              \\\
   --disable-vnc                    \\\
   --disable-vnc-jpeg               \\\
-  --disable-vnc-png                \\\
   --disable-vnc-sasl               \\\
   --disable-vte                    \\\
   --disable-vvfat                  \\\
@@ -1044,7 +1020,6 @@ mkdir -p %{static_builddir}
   --disable-whpx                   \\\
   --disable-xen                    \\\
   --disable-xen-pci-passthrough    \\\
-  --disable-xfsctl                 \\\
   --disable-xkbcommon              \\\
   --disable-zstd                   \\\
   --with-git-submodules=ignore     \\\
@@ -1094,7 +1069,6 @@ run_configure \
 %endif
   --enable-bpf \
   --enable-cap-ng \
-  --enable-capstone=auto \
   --enable-coroutine-pool \
   --enable-curl \
   --enable-debug-info \
@@ -1130,8 +1104,6 @@ run_configure \
   --enable-rdma \
   --enable-seccomp \
   --enable-selinux \
-  --enable-slirp=system \
-  --enable-slirp-smbd \
   --enable-snappy \
   --enable-system \
   --enable-tcg \
@@ -1140,15 +1112,7 @@ run_configure \
 %if %{with usb_redir}
   --enable-usb-redir \
 %endif
-  --enable-virtiofsd \
-  --enable-vhost-kernel \
-  --enable-vhost-net \
-  --enable-vhost-user \
-  --enable-vhost-user-blk-server \
-  --enable-vhost-vdpa \
-  --enable-vhost-vsock \
   --enable-vnc \
-  --enable-vnc-png \
   --enable-vnc-sasl \
   --enable-xkbcommon \
   \
@@ -1170,7 +1134,6 @@ run_configure \
   --enable-libnfs \
 %endif
   --enable-libudev \
-  --enable-libxml2 \
   --enable-linux-io-uring \
   --enable-linux-user \
   --enable-live-block-migration \
@@ -1185,7 +1148,6 @@ run_configure \
   --enable-sdl \
   --enable-vdi \
   --enable-vhost-crypto \
-  --enable-vhost-scsi \
 %if %{with virgl}
   --enable-virglrenderer \
 %endif
@@ -1274,6 +1236,10 @@ chmod +x %{buildroot}%{_libdir}/%{name}/*.so
 find %{buildroot}%{qemudocdir} -name .buildinfo -delete
 rm -rf %{buildroot}%{qemudocdir}/specs
 
+# Remove vof roms
+rm -rf %{buildroot}%{_datadir}/%{name}/vof-nvram.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/vof.bin
+
 %ifnarch ppc64le
 rm -rf %{buildroot}%{_bindir}/qemu-system-ppc
 rm -rf %{buildroot}%{_bindir}/qemu-system-ppc64
@@ -1292,6 +1258,18 @@ rm -rf %{buildroot}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
 rm -rf %{buildroot}%{_bindir}/qemu-system-aarch64
 rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-aarch64*.stp
 rm -rf %{buildroot}%{_mandir}/man1/qemu-system-aarch64.1*
+%endif
+
+%ifnarch loongarch64
+rm -rf %{buildroot}%{_bindir}/qemu-loongarch64
+rm -rf %{buildroot}%{_bindir}/qemu-system-loongarch64
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-loongarch64-log.stp
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-loongarch64-simpletrace.stp
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-loongarch64.stp
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64-log.stp
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64-simpletrace.stp
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64.stp
+rm -rf %{buildroot}%{_mandir}/man1/qemu-system-loongarch64.1.gz
 %endif
 
 %ifnarch riscv
@@ -1519,12 +1497,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_mandir}/man8/qemu-pr-helper.8*
 
 
-%files -n qemu-virtiofsd
-%{_mandir}/man1/virtiofsd.1*
-%{_libexecdir}/virtiofsd
-%{_datadir}/qemu/vhost-user/50-qemu-virtiofsd.json
-
-
 %files tools
 %{_bindir}/qemu-keymap
 %{_bindir}/qemu-edid
@@ -1622,14 +1594,8 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %files device-display-virtio-gpu
 %{_libdir}/%{name}/hw-display-virtio-gpu.so
 
-%files device-display-virtio-gpu-gl
-%{_libdir}/%{name}/hw-display-virtio-gpu-gl.so
-
 %files device-display-virtio-gpu-pci
 %{_libdir}/%{name}/hw-display-virtio-gpu-pci.so
-
-%files device-display-virtio-gpu-pci-gl
-%{_libdir}/%{name}/hw-display-virtio-gpu-pci-gl.so
 
 %files device-display-virtio-gpu-ccw
 %{_libdir}/%{name}/hw-s390x-virtio-gpu-ccw.so
@@ -1731,6 +1697,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_bindir}/qemu-system-aarch64
 %{_datadir}/systemtap/tapset/qemu-system-aarch64*.stp
 %{_mandir}/man1/qemu-system-aarch64.1*
+%endif
+
+%ifarch loongarch64
+%files system-loongarch64
+%files system-loongarch64-core
+%{_bindir}/qemu-loongarch64
+%{_bindir}/qemu-system-loongarch64
+%{_datadir}/systemtap/tapset/qemu-loongarch64-log.stp
+%{_datadir}/systemtap/tapset/qemu-loongarch64-simpletrace.stp
+%{_datadir}/systemtap/tapset/qemu-loongarch64.stp
+%{_datadir}/systemtap/tapset/qemu-system-loongarch64-log.stp
+%{_datadir}/systemtap/tapset/qemu-system-loongarch64-simpletrace.stp
+%{_datadir}/systemtap/tapset/qemu-system-loongarch64.stp
+%{_mandir}/man1/qemu-system-loongarch64.1.gz
 %endif
 
 %if %{with extra_arch}
@@ -1909,6 +1889,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jul 11 2023 cunshunxia <cunshunxia@tencent.com> - 8.0.2-1
+- upgrade to 8.0.2.
+
 * Fri Apr 28 2023 OpenCloudOS Release Engineering <releng@opencloudos.tech> - 6.2.0-8
 - Rebuilt for OpenCloudOS Stream 23.05
 
