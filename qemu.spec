@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.0.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -226,7 +226,7 @@ BuildRequires: fuse-devel
 BuildRequires: fuse3-devel
 BuildRequires: flex bison
 
-BuildRequires: glibc-static pcre-static glib2-static zlib-static
+BuildRequires: glibc-static pcre2-static glib2-static zlib-static
 
 %ifarch aarch64
 Requires: %{name}-system-aarch64 = %{version}-%{release}
@@ -1889,6 +1889,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Aug 11 2023 Wang Guodong <gordonwwang@tencent.com> - 8.0.2-3
+- Replace pcre-static with pcre2-static, to adjust for glib2 switching
+
 * Mon Jul 17 2023 kianli <kianli@tencent.com> - 8.0.2-2
 - Rebuild with libbpf 1.2.0
 
