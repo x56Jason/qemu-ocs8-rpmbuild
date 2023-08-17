@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.0.2
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -146,6 +146,8 @@ Source6: vhost.conf
 Source7: kvm.conf
 Source8: kvm-s390x.conf
 Source9: kvm-x86.conf
+
+Patch0001: 0001-pc-bios-keymaps-Use-the-official-xkb-name-for-Arabic.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1889,6 +1891,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Aug 17 2023 cunshunxia <cunshunxia@tencent.com> - 8.0.2-4
+- Rebuilt for SDL2 2.28.2
+
 * Fri Aug 11 2023 Wang Guodong <gordonwwang@tencent.com> - 8.0.2-3
 - Replace pcre-static with pcre2-static, to adjust for glib2 switching
 
