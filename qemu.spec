@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.0.2
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -1891,6 +1891,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Aug 22 2023 Shuo Wang <abushwang@tencent.com> - 8.0.2-6
+- Rebuilt for ndctl 78
+
 * Fri Aug 18 2023 Miaojun Dong <zoedong@tencent.com> - 8.0.2-5
 - Rebuild for ceph-18.2.0
 
