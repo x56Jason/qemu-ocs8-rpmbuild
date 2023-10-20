@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.0.2
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -149,6 +149,11 @@ Source9: kvm-x86.conf
 
 Patch0001: 0001-pc-bios-keymaps-Use-the-official-xkb-name-for-Arabic.patch
 Patch0002: 0002-fix-CVE-2023-42467.patch
+Patch0003: 0003-fix-CVE-2023-40360.patch
+Patch0004: 0004-fix-CVE-2023-4135.patch
+Patch0005: 0005-fix-CVE-2023-3354.patch
+Patch0006: 0006-fix-CVE-2023-3255.patch
+Patch0007: 0007-fix-CVE-2023-3180.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1892,6 +1897,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Oct 19 2023 jackeyji <jackeyji@tencent.com> - 8.0.2-11
+- fix CVE-2023-40360 CVE-2023-4135 CVE-2023-3354 CVE-2023-3255 CVE-2023-3180
+
 * Wed Oct 18 2023 jackeyji <jackeyji@tencent.com> - 8.0.2-10
 - fix CVE-2023-42467
 
