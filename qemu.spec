@@ -131,8 +131,8 @@
 
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
-Version: 8.0.2
-Release: 13%{?dist}
+Version: 8.2.0
+Release: 1%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -147,18 +147,10 @@ Source7: kvm.conf
 Source8: kvm-s390x.conf
 Source9: kvm-x86.conf
 
-Patch0001: 0001-pc-bios-keymaps-Use-the-official-xkb-name-for-Arabic.patch
-Patch0002: 0002-fix-CVE-2023-42467.patch
-Patch0003: 0003-fix-CVE-2023-40360.patch
-Patch0004: 0004-fix-CVE-2023-4135.patch
-Patch0005: 0005-fix-CVE-2023-3354.patch
-Patch0006: 0006-fix-CVE-2023-3255.patch
 Patch0007: 0007-fix-CVE-2023-3180.patch
 Patch0008: CVE-2023-5088.patch
 # CVE-2023-3301
 # https://github.com/qemu/qemu/commit/a0d7215e339b61c7d7a7b3fcf754954d80d93eb8
-Patch0009: fix-CVE-2023-3301.patch
-Patch0010: fix-CVE-2023-2861.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -964,7 +956,6 @@ mkdir -p %{static_builddir}
   --disable-gtk                    \\\
   --disable-guest-agent            \\\
   --disable-guest-agent-msi        \\\
-  --disable-hax                    \\\
   --disable-hvf                    \\\
   --disable-iconv                  \\\
   --disable-kvm                    \\\
@@ -994,6 +985,7 @@ mkdir -p %{static_builddir}
   --disable-opengl                 \\\
   --disable-parallels              \\\
   --disable-pie                    \\\
+  --disable-plugins                \\\
   --disable-pvrdma                 \\\
   --disable-qcow1                  \\\
   --disable-qed                    \\\
@@ -1035,7 +1027,6 @@ mkdir -p %{static_builddir}
   --disable-xen-pci-passthrough    \\\
   --disable-xkbcommon              \\\
   --disable-zstd                   \\\
-  --with-git-submodules=ignore     \\\
   --without-default-devices
 
 run_configure() {
@@ -1055,10 +1046,8 @@ run_configure() {
         --with-pkgversion="%{name}-%{version}-%{release}" \
         --with-suffix="%{name}" \
         --firmwarepath="%firmwaredirs" \
-        --meson="%{__meson}" \
         --enable-trace-backends=dtrace \
         --with-coroutine=ucontext \
-        --with-git=git \
         --tls-priority=@QEMU,SYSTEM \
         %{disable_everything} \
         "$@"
@@ -1209,7 +1198,7 @@ install -m 0644 contrib/systemd/qemu-pr-helper.socket %{buildroot}%{_unitdir}
 install -D -p -m 0644 %{_sourcedir}/vhost.conf %{buildroot}%{_sysconfdir}/modprobe.d/vhost.conf
 install -D -p -m 0644 %{modprobe_kvm_conf} %{buildroot}%{_sysconfdir}/modprobe.d/kvm.conf
 
-install -D -p -m 0644 -t %{buildroot}%{qemudocdir} README.rst COPYING COPYING.LIB LICENSE docs/interop/qmp-spec.txt
+install -D -p -m 0644 -t %{buildroot}%{qemudocdir} README.rst COPYING COPYING.LIB LICENSE docs/interop/qmp-spec.rst
 install -D -p -m 0644 qemu.sasl %{buildroot}%{_sysconfdir}/sasl2/%{name}.conf
 
 install -m 0644 scripts/dump-guest-memory.py %{buildroot}%{_datadir}/%{name}
@@ -1902,6 +1891,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Jan 26 2024 Upgrade Robot <upbot@opencloudos.org> - 8.2.0-1
+- Upgrade to version 8.2.0
+
 * Mon Dec 11 2023 cunshunxia <cunshunxia@tencent.com> - 8.0.2-13
 - fix-CVE-2023-2861
 
