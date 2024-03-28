@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -151,6 +151,7 @@ Patch0007: 0007-fix-CVE-2023-3180.patch
 Patch0008: CVE-2023-5088.patch
 # CVE-2023-3301
 # https://github.com/qemu/qemu/commit/a0d7215e339b61c7d7a7b3fcf754954d80d93eb8
+Patch0009: 0008-newfeature-support-vpsp.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1891,6 +1892,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Mar 25 2024 Mengbiao Xiong <xiongmengbiao@hygon.cn> - 8.2.0-2
+- Support hygon tkm key isolation
+
 * Fri Jan 26 2024 Upgrade Robot <upbot@opencloudos.org> - 8.2.0-1
 - Upgrade to version 8.2.0
 
