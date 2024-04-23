@@ -131,8 +131,8 @@
 
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
-Version: 8.2.0
-Release: 2%{?dist}
+Version: 8.2.2
+Release: 1%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -1892,6 +1892,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Apr 17 2024 Upgrade Robot <upbot@opencloudos.org> - 8.2.2-1
+- Upgrade to version 8.2.2
+- fix vnc module display problem, see
+- https://gitlab.com/qemu-project/qemu/-/issues/2051
+
 * Mon Mar 25 2024 Mengbiao Xiong <xiongmengbiao@hygon.cn> - 8.2.0-2
 - Support hygon tkm key isolation
 
