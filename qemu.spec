@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -152,6 +152,34 @@ Patch0008: CVE-2023-5088.patch
 # CVE-2023-3301
 # https://github.com/qemu/qemu/commit/a0d7215e339b61c7d7a7b3fcf754954d80d93eb8
 Patch0009: 0008-newfeature-support-vpsp.patch
+Patch0010: 0009-doc-update-AMD-SEV-to-include-Live-migration-flow.patch
+Patch0011: 0010-migration.json-add-AMD-SEV-specific-migration-parame.patch
+Patch0012: 0011-confidential-guest-support-introduce-ConfidentialGue.patch
+Patch0013: 0012-target-i386-sev-provide-callback-to-setup-outgoing-c.patch
+Patch0014: 0013-target-i386-sev-do-not-create-launch-context-for-an-.patch
+Patch0015: 0014-target-i386-sev-add-support-to-encrypt-the-outgoing-.patch
+Patch0016: 0015-target-i386-sev-add-support-to-load-incoming-encrypt.patch
+Patch0017: 0016-kvm-Add-support-for-SEV-shared-regions-list-and-KVM_.patch
+Patch0018: 0017-migration-add-support-to-migrate-shared-regions-list.patch
+Patch0019: 0018-migration-ram-add-support-to-send-encrypted-pages.patch
+Patch0020: 0019-migration-ram-Force-encrypted-status-for-flash0-flas.patch
+Patch0021: 0020-kvm-Add-support-for-userspace-MSR-filtering-and-hand.patch
+Patch0022: 0021-target-i386-sev-Return-0-if-sev_send_get_packet_len-.patch
+Patch0023: 0022-migration-ram-Force-encrypted-status-for-VGA-vram.patch
+Patch0024: 0023-target-i386-sev-Clear-shared_regions_list-when-reboo.patch
+Patch0025: 0024-migration-ram-Fix-calculation-of-gfn-correpond-to-a-.patch
+Patch0026: 0025-target-i386-Introduce-header-file-csv.h.patch
+Patch0027: 0026-target-i386-csv-Read-cert-chain-from-file-when-prepa.patch
+Patch0028: 0027-target-i386-csv-add-support-to-queue-the-outgoing-pa.patch
+Patch0029: 0028-target-i386-csv-add-support-to-encrypt-the-outgoing-.patch
+Patch0030: 0029-target-i386-csv-add-support-to-queue-the-incoming-pa.patch
+Patch0031: 0030-target-i386-csv-add-support-to-load-incoming-encrypt.patch
+Patch0032: 0031-migration-ram-Accelerate-the-transmission-of-CSV-gue.patch
+Patch0033: 0032-migration-ram-Accelerate-the-loading-of-CSV-guest-s-.patch
+Patch0034: 0033-target-i386-csv-Add-support-for-migrate-VMSA-for-CSV.patch
+Patch0035: 0034-target-i386-get-set-migrate-GHCB-state.patch
+Patch0036: 0035-target-i386-kvm-Fix-the-resettable-info-when-emulate.patch
+Patch0037: 0036-kvm-Add-support-for-CSV2-reboot.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1892,6 +1920,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue May 14 2024 Liyang Han <hanliyang@hygon.cn> - 8.2.2-2
+- Support CSV/CSV2 live migration and reboot
+
 * Wed Apr 17 2024 Upgrade Robot <upbot@opencloudos.org> - 8.2.2-1
 - Upgrade to version 8.2.2
 - fix vnc module display problem, see
