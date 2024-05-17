@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -180,6 +180,20 @@ Patch0034: 0033-target-i386-csv-Add-support-for-migrate-VMSA-for-CSV.patch
 Patch0035: 0034-target-i386-get-set-migrate-GHCB-state.patch
 Patch0036: 0035-target-i386-kvm-Fix-the-resettable-info-when-emulate.patch
 Patch0037: 0036-kvm-Add-support-for-CSV2-reboot.patch
+Patch0038: 0037-target-i386-csv-Add-CSV3-context.patch
+Patch0039: 0038-target-i386-csv-Add-command-to-initialize-CSV3-conte.patch
+Patch0040: 0039-target-i386-csv-Add-command-to-load-data-to-CSV3-gue.patch
+Patch0041: 0040-target-i386-csv-Add-command-to-load-vmcb-to-CSV3-gue.patch
+Patch0042: 0041-target-i386-cpu-Populate-CPUID-0x8000_001F-when-CSV3.patch
+Patch0043: 0042-target-i386-csv-Do-not-register-unregister-guest-sec.patch
+Patch0044: 0043-target-i386-csv-Load-initial-image-to-private-memory.patch
+Patch0045: 0044-vga-Force-full-update-for-CSV3-guest.patch
+Patch0046: 0045-vfio-Only-map-shared-region-for-CSV3-virtual-machine.patch
+Patch0047: 0046-linux-headers-update-kernel-headers-to-include-CSV3-.patch
+Patch0048: 0047-target-i386-csv-Add-support-to-migrate-the-outgoing-.patch
+Patch0049: 0048-target-i386-csv-Add-support-to-migrate-the-incoming-.patch
+Patch0050: 0049-target-i386-csv-Add-support-to-migrate-the-outgoing-.patch
+Patch0051: 0050-target-i386-csv-Add-support-to-migrate-the-incoming-.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1920,6 +1934,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri May 17 2024 Liyang Han <hanliyang@hygon.cn> - 8.2.2-3
+- Support Hygon CSV3 guest, support live migration for Hygon CSV3 guest
+
 * Tue May 14 2024 Liyang Han <hanliyang@hygon.cn> - 8.2.2-2
 - Support CSV/CSV2 live migration and reboot
 
