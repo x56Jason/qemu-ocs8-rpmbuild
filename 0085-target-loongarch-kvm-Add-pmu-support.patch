@@ -1,0 +1,224 @@
+From 9e21ba794167d715590bb05f373b09b6409da8cc Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Fri, 22 Mar 2024 19:26:35 +0800
+Subject: [PATCH] target/loongarch/kvm: Add pmu support
+
+This patch adds PMU support
+  e.g
+    '...  -cpu max,pmu=on,pmnum=[1-16]';
+    '...  -cpu max,pmu=on' (default pmnum = 4);
+    '...  -cpu max,pmu=off' (disable PMU)
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ target/loongarch/cpu.c                | 64 +++++++++++++++++++++++++++
+ target/loongarch/cpu.h                |  2 +
+ target/loongarch/kvm/kvm.c            | 55 ++++++++++++++++++++++-
+ target/loongarch/loongarch-qmp-cmds.c |  2 +-
+ 4 files changed, 121 insertions(+), 2 deletions(-)
+
+diff --git a/target/loongarch/cpu.c b/target/loongarch/cpu.c
+index b098b1c6f3..86d18f89a4 100644
+--- a/target/loongarch/cpu.c
++++ b/target/loongarch/cpu.c
+@@ -8,6 +8,7 @@
+ #include "qemu/osdep.h"
+ #include "qemu/log.h"
+ #include "qemu/qemu-print.h"
++#include "qemu/error-report.h"
+ #include "qapi/error.h"
+ #include "qemu/module.h"
+ #include "sysemu/qtest.h"
+@@ -19,6 +20,7 @@
+ #include "internals.h"
+ #include "fpu/softfloat-helpers.h"
+ #include "cpu-csr.h"
++#include "qapi/visitor.h"
+ #include "sysemu/reset.h"
+ #include "vec.h"
+ #ifdef CONFIG_KVM
+@@ -420,6 +422,14 @@ static void loongarch_la464_initfn(Object *obj)
+     data = FIELD_DP32(data, CPUCFG5, CC_DIV, 1);
+     env->cpucfg[5] = data;
+ 
++    if (kvm_enabled()) {
++        data = 0;
++        data = FIELD_DP32(data, CPUCFG6, PMP, 1);
++        data = FIELD_DP32(data, CPUCFG6, PMNUM, 3);
++        data = FIELD_DP32(data, CPUCFG6, PMBITS, 63);
++        env->cpucfg[6] = data;
++    }
++
+     data = 0;
+     data = FIELD_DP32(data, CPUCFG16, L1_IUPRE, 1);
+     data = FIELD_DP32(data, CPUCFG16, L1_DPRE, 1);
+@@ -654,6 +664,48 @@ static void loongarch_set_lasx(Object *obj, bool value, Error **errp)
+     }
+ }
+ 
++static bool loongarch_get_pmu(Object *obj, Error **errp)
++{
++    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
++
++    return  !!(FIELD_EX32(cpu->env.cpucfg[6], CPUCFG6, PMP));
++}
++
++static void loongarch_set_pmu(Object *obj, bool value,  Error **errp)
++{
++    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
++
++    cpu->env.cpucfg[6] = FIELD_DP32(cpu->env.cpucfg[6], CPUCFG6, PMP, value);
++}
++
++static void loongarch_get_pmnum(Object *obj, Visitor *v,
++                                const char *name, void *opaque,
++                                Error **errp)
++{
++    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
++    uint32_t value = FIELD_EX32(cpu->env.cpucfg[6], CPUCFG6, PMNUM);
++
++    visit_type_uint32(v, name, &value, errp);
++}
++
++static void loongarch_set_pmnum(Object *obj, Visitor *v,
++                                const char *name, void *opaque,
++                                Error **errp)
++{
++    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
++    uint32_t *value= opaque;
++
++    if (!visit_type_uint32(v, name, value, errp)) {
++        return;
++    }
++    if ((*value <= PMNUM_MAX) && (*value > 0)) {
++        cpu->env.cpucfg[6] = FIELD_DP32(cpu->env.cpucfg[6], CPUCFG6, PMNUM, *value -1);
++    } else {
++        error_report("Performance counter number need be in [1- %d]\n", PMNUM_MAX);
++        exit(EXIT_FAILURE);
++    }
++}
++
+ void loongarch_cpu_post_init(Object *obj)
+ {
+     LoongArchCPU *cpu = LOONGARCH_CPU(obj);
+@@ -666,6 +718,18 @@ void loongarch_cpu_post_init(Object *obj)
+         object_property_add_bool(obj, "lasx", loongarch_get_lasx,
+                                  loongarch_set_lasx);
+     }
++
++    if (kvm_enabled()) {
++        object_property_add_bool(obj, "pmu", loongarch_get_pmu,
++                                 loongarch_set_pmu);
++        if (FIELD_EX32(cpu->env.cpucfg[6], CPUCFG6, PMP)) {
++            uint32_t value = 4;
++            object_property_add(obj, "pmnum", "uint32",
++                                loongarch_get_pmnum,
++                                loongarch_set_pmnum, NULL,
++                                (void *)&value);
++        }
++    }
+ }
+ 
+ static void loongarch_cpu_init(Object *obj)
+diff --git a/target/loongarch/cpu.h b/target/loongarch/cpu.h
+index 4749d41c8c..80cad24fa1 100644
+--- a/target/loongarch/cpu.h
++++ b/target/loongarch/cpu.h
+@@ -186,6 +186,8 @@ FIELD(CPUCFG6, PMNUM, 4, 4)
+ FIELD(CPUCFG6, PMBITS, 8, 6)
+ FIELD(CPUCFG6, UPM, 14, 1)
+ 
++#define PMNUM_MAX 16
++
+ /* cpucfg[16] bits */
+ FIELD(CPUCFG16, L1_IUPRE, 0, 1)
+ FIELD(CPUCFG16, L1_IUUNIFY, 1, 1)
+diff --git a/target/loongarch/kvm/kvm.c b/target/loongarch/kvm/kvm.c
+index 49d02076ad..5dda631b2b 100644
+--- a/target/loongarch/kvm/kvm.c
++++ b/target/loongarch/kvm/kvm.c
+@@ -573,6 +573,53 @@ static int kvm_check_cpucfg2(CPUState *cs)
+     return ret;
+ }
+ 
++static int kvm_check_cpucfg6(CPUState *cs)
++{
++    int ret;
++    uint64_t val;
++    struct kvm_device_attr attr = {
++        .group = KVM_LOONGARCH_VCPU_CPUCFG,
++        .attr = 6,
++        .addr = (uint64_t)&val,
++    };
++    LoongArchCPU *cpu = LOONGARCH_CPU(cs);
++    CPULoongArchState *env = &cpu->env;
++
++    ret = kvm_vcpu_ioctl(cs, KVM_HAS_DEVICE_ATTR, &attr);
++    if (!ret) {
++        kvm_vcpu_ioctl(cs, KVM_GET_DEVICE_ATTR, &attr);
++
++        if (FIELD_EX32(env->cpucfg[6], CPUCFG6, PMP)) {
++             /* Check PMP */
++             if (!FIELD_EX32(val, CPUCFG6, PMP)) {
++                 error_report("'pmu' feature not supported by KVM on this host"
++                              " Please disable 'pmu' with "
++                              "'... -cpu XXX,pmu=off ...'\n");
++                 exit(EXIT_FAILURE);
++             }
++             /* Check PMNUM */
++             int guest_pmnum = FIELD_EX32(env->cpucfg[6], CPUCFG6, PMNUM);
++             int host_pmnum = FIELD_EX32(val, CPUCFG6, PMNUM);
++             if (guest_pmnum > host_pmnum){
++                 warn_report("The guest pmnum %d larger than KVM support %d\n",
++                              guest_pmnum, host_pmnum);
++                 env->cpucfg[6] = FIELD_DP32(env->cpucfg[6], CPUCFG6,
++                                             PMNUM, host_pmnum);
++             }
++             /* Check PMBITS */
++             int guest_pmbits = FIELD_EX32(env->cpucfg[6], CPUCFG6, PMBITS);
++             int host_pmbits = FIELD_EX32(val, CPUCFG6, PMBITS);
++             if (guest_pmbits != host_pmbits) {
++                 warn_report("The host not support PMBITS %d\n", guest_pmbits);
++                 env->cpucfg[6] = FIELD_DP32(env->cpucfg[6], CPUCFG6,
++                                             PMBITS, host_pmbits);
++             }
++        }
++    }
++
++    return ret;
++}
++
+ static int kvm_loongarch_put_cpucfg(CPUState *cs)
+ {
+     int i, ret = 0;
+@@ -586,7 +633,13 @@ static int kvm_loongarch_put_cpucfg(CPUState *cs)
+             if (ret) {
+                 return ret;
+             }
+-	}
++        }
++        if (i == 6) {
++            ret = kvm_check_cpucfg6(cs);
++            if (ret) {
++                return ret;
++            }
++        }
+         val = env->cpucfg[i];
+         ret = kvm_set_one_reg(cs, KVM_IOC_CPUCFG(i), &val);
+         if (ret < 0) {
+diff --git a/target/loongarch/loongarch-qmp-cmds.c b/target/loongarch/loongarch-qmp-cmds.c
+index 645672ff59..2612f43de9 100644
+--- a/target/loongarch/loongarch-qmp-cmds.c
++++ b/target/loongarch/loongarch-qmp-cmds.c
+@@ -42,7 +42,7 @@ CpuDefinitionInfoList *qmp_query_cpu_definitions(Error **errp)
+ }
+ 
+ static const char *cpu_model_advertised_features[] = {
+-    "lsx", "lasx", NULL
++    "lsx", "lasx", "pmu", "pmnum", NULL
+ };
+ 
+ CpuModelExpansionInfo *qmp_query_cpu_model_expansion(CpuModelExpansionType type,
+-- 
+2.33.0
+

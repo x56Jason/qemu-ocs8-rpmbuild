@@ -1,0 +1,56 @@
+From 49a7ae85d6ac42f8ef556a0d42802508c28adfcc Mon Sep 17 00:00:00 2001
+From: Tianrui Zhao <zhaotianrui@loongson.cn>
+Date: Fri, 5 Jan 2024 15:58:04 +0800
+Subject: [PATCH] target/loongarch: Add loongarch kvm into meson build
+
+Add kvm.c into meson.build to compile it when kvm
+is configed. Meanwhile in meson.build, we set the
+kvm_targets to loongarch64-softmmu when the cpu is
+loongarch. And fix the compiling error when config
+is enable-kvm,disable-tcg.
+
+Signed-off-by: Tianrui Zhao <zhaotianrui@loongson.cn>
+Signed-off-by: xianglai li <lixianglai@loongson.cn>
+Reviewed-by: Richard Henderson <richard.henderson@linaro.org>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240105075804.1228596-10-zhaotianrui@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ meson.build                      | 2 ++
+ target/loongarch/kvm/meson.build | 1 +
+ target/loongarch/meson.build     | 1 +
+ 3 files changed, 4 insertions(+)
+ create mode 100644 target/loongarch/kvm/meson.build
+
+diff --git a/meson.build b/meson.build
+index 445f2b7c2b..0c62b4156d 100644
+--- a/meson.build
++++ b/meson.build
+@@ -114,6 +114,8 @@ elif cpu in ['riscv32']
+   kvm_targets = ['riscv32-softmmu']
+ elif cpu in ['riscv64']
+   kvm_targets = ['riscv64-softmmu']
++elif cpu in ['loongarch64']
++  kvm_targets = ['loongarch64-softmmu']
+ else
+   kvm_targets = []
+ endif
+diff --git a/target/loongarch/kvm/meson.build b/target/loongarch/kvm/meson.build
+new file mode 100644
+index 0000000000..2266de6ca9
+--- /dev/null
++++ b/target/loongarch/kvm/meson.build
+@@ -0,0 +1 @@
++loongarch_ss.add(when: 'CONFIG_KVM', if_true: files('kvm.c'))
+diff --git a/target/loongarch/meson.build b/target/loongarch/meson.build
+index e84e4c51f4..db310f6022 100644
+--- a/target/loongarch/meson.build
++++ b/target/loongarch/meson.build
+@@ -18,3 +18,4 @@ subdir('tcg')
+ 
+ target_arch += {'loongarch': loongarch_ss}
+ target_system_arch += {'loongarch': loongarch_system_ss}
++subdir('kvm')
+-- 
+2.33.0
+

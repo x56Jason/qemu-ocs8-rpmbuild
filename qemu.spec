@@ -17,6 +17,10 @@
 %global kvm_package   system-riscv
 %endif
 
+%ifarch loongarch64
+%global kvm_package   system-loongarch64
+%endif
+
 %global modprobe_kvm_conf %{_sourcedir}/kvm.conf
 %ifarch x86_64
 %global modprobe_kvm_conf %{_sourcedir}/kvm-x86.conf
@@ -132,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -198,8 +202,44 @@ Patch0052: 0051-target-i386-sev-Fix-incompatibility-between-SEV-and-.patch
 Patch0053: 0052-target-i386-sev-Add-support-for-reuse-ASID-for-diffe.patch
 Patch0054: 0053-newfeature-vfio-add-vfio-based-mediated-hct-support.patch
 Patch0055: 0054-optimization-hct-Change-the-value-of-variable-MAX_CC.patch
-Patch0056: 0055-target-i386-Add-Hygon-Dhyana-v3-CPU-model.patch
-Patch0057: 0056-target-i386-Add-new-Hygon-Dharma-CPU-model.patch
+
+Patch0056: 0055-hw-loongarch-virt-Align-high-memory-base-address-wit.patch
+Patch0057: 0056-target-loongarch-Add-timer-information-dump-support.patch
+Patch0058: 0057-target-loongarch-meson-move-gdbstub.c-to-loongarch.s.patch
+Patch0059: 0058-target-loongarch-move-translate-modules-to-tcg.patch
+Patch0060: 0059-linux-headers-Update-to-Linux-v6.7-rc5.patch
+Patch0061: 0060-linux-headers-Synchronize-linux-headers-from-linux-v.patch
+Patch0062: 0061-target-loongarch-Define-some-kvm_arch-interfaces.patch
+Patch0063: 0062-target-loongarch-Supplement-vcpu-env-initial-when-vc.patch
+Patch0064: 0063-target-loongarch-Implement-kvm-get-set-registers.patch
+Patch0065: 0064-target-loongarch-Implement-kvm_arch_init-function.patch
+Patch0066: 0065-target-loongarch-Implement-kvm_arch_init_vcpu.patch
+Patch0067: 0066-target-loongarch-Implement-kvm_arch_handle_exit.patch
+Patch0068: 0067-target-loongarch-Restrict-TCG-specific-code.patch
+Patch0069: 0068-target-loongarch-Implement-set-vcpu-intr-for-kvm.patch
+Patch0070: 0069-target-loongarch-Add-loongarch-kvm-into-meson-build.patch
+Patch0071: 0070-hw-intc-loongarch_ipi-Use-MemTxAttrs-interface-for-i.patch
+Patch0072: 0071-hw-loongarch-virt-Set-iocsr-address-space-per-board-.patch
+Patch0073: 0072-hw-intc-loongarch_extioi-Add-dynamic-cpu-number-supp.patch
+Patch0074: 0073-hw-intc-loongarch_extioi-Add-vmstate-post_load-suppo.patch
+Patch0075: 0074-configure-Add-linux-header-compile-support-for-Loong.patch
+Patch0076: 0075-target-loongarch-Set-cpuid-CSR-register-only-once-wi.patch
+Patch0077: 0076-target-loongarch-kvm-Enable-LSX-LASX-extension.patch
+Patch0078: 0077-target-loongarch-Fix-qtest-test-hmp-error-when-KVM-o.patch
+Patch0079: 0078-loongarch-Change-the-UEFI-loading-mode-to-loongarch.patch
+Patch0080: 0079-target-loongarch-Fix-tlb-huge-page-loading-issue.patch
+Patch0081: 0080-target-loongarch-Fix-qemu-loongarch64-hang-when-exec.patch
+Patch0082: 0081-target-loongarch-kvm-Add-software-breakpoint-support.patch
+Patch0083: 0082-hw-intc-loongarch_extioi-Add-virt-extension-support.patch
+Patch0084: 0083-target-loongarch-kvm-sync-kernel-header-files.patch
+Patch0085: 0084-hw-intc-loongarch_extioi-Add-virt-extension-support-.patch
+Patch0086: 0085-target-loongarch-kvm-Add-pmu-support.patch
+Patch0087: 0086-target-loongarch-Fix-qemu-system-loongarch64-assert-.patch
+Patch0088: 0087-target-loongarch-kvm-Fix-VM-recovery-from-disk-failu.patch
+Patch0089: 0088-target-loongarch-kvm-fpu-save-the-vreg-registers-hig.patch
+
+Patch0090: 0089-target-i386-Add-Hygon-Dhyana-v3-CPU-model.patch
+Patch0091: 0090-target-i386-Add-new-Hygon-Dharma-CPU-model.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -293,6 +333,9 @@ Requires: %{name}-system-x86 = %{version}-%{release}
 %endif
 %ifarch riscv
 Requires: %{name}-system-riscv = %{version}-%{release}
+%endif
+%ifarch loongarch64
+Requires: %{name}-system-loongarch64 = %{version}-%{release}
 %endif
 Requires: %{name}-user = %{version}-%{release}
 Requires: %{name}-img = %{version}-%{release}
@@ -647,13 +690,16 @@ This package provides the QEMU system emulator for AArch64.
 %package system-loongarch64
 Summary: QEMU system emulator for Loongarch64
 Requires: %{name}-system-loongarch64-core = %{version}-%{release}
+%{requires_all_modules}
 
-%description system-Loongarch64
+%description system-loongarch64
 This package provides the QEMU system emulator for Loongarch64.
 
 %package system-loongarch64-core
 Summary: QEMU system emulator for Loongarch64
 Requires: %{name}-common = %{version}-%{release}
+Requires: seavgabios-bin
+Requires: edk2-loongarch64
 
 %description system-loongarch64-core
 This package provides the QEMU system emulator for Loongarch64.
@@ -1312,14 +1358,8 @@ rm -rf %{buildroot}%{_mandir}/man1/qemu-system-aarch64.1*
 %endif
 
 %ifnarch loongarch64
-rm -rf %{buildroot}%{_bindir}/qemu-loongarch64
 rm -rf %{buildroot}%{_bindir}/qemu-system-loongarch64
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-loongarch64-log.stp
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-loongarch64-simpletrace.stp
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-loongarch64.stp
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64-log.stp
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64-simpletrace.stp
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64.stp
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64*.stp
 rm -rf %{buildroot}%{_mandir}/man1/qemu-system-loongarch64.1.gz
 %endif
 
@@ -1689,6 +1729,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_bindir}/qemu-cris
 %{_bindir}/qemu-hppa
 %{_bindir}/qemu-hexagon
+%{_bindir}/qemu-loongarch64
 %{_bindir}/qemu-m68k
 %{_bindir}/qemu-microblaze
 %{_bindir}/qemu-microblazeel
@@ -1721,6 +1762,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/systemtap/tapset/qemu-cris*.stp
 %{_datadir}/systemtap/tapset/qemu-hppa*.stp
 %{_datadir}/systemtap/tapset/qemu-hexagon*.stp
+%{_datadir}/systemtap/tapset/qemu-loongarch64*.stp
 %{_datadir}/systemtap/tapset/qemu-m68k*.stp
 %{_datadir}/systemtap/tapset/qemu-microblaze*.stp
 %{_datadir}/systemtap/tapset/qemu-mips*.stp
@@ -1753,14 +1795,8 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %ifarch loongarch64
 %files system-loongarch64
 %files system-loongarch64-core
-%{_bindir}/qemu-loongarch64
 %{_bindir}/qemu-system-loongarch64
-%{_datadir}/systemtap/tapset/qemu-loongarch64-log.stp
-%{_datadir}/systemtap/tapset/qemu-loongarch64-simpletrace.stp
-%{_datadir}/systemtap/tapset/qemu-loongarch64.stp
-%{_datadir}/systemtap/tapset/qemu-system-loongarch64-log.stp
-%{_datadir}/systemtap/tapset/qemu-system-loongarch64-simpletrace.stp
-%{_datadir}/systemtap/tapset/qemu-system-loongarch64.stp
+%{_datadir}/systemtap/tapset/qemu-system-loongarch64*.stp
 %{_mandir}/man1/qemu-system-loongarch64.1.gz
 %endif
 
@@ -1940,6 +1976,43 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Jun 6 2024 Song Gao <gaosong@loongson.cn> - 8.2.2-7
+- Patch0056: 0055-hw-loongarch-virt-Align-high-memory-base-address-wit.patch
+- Patch0057: 0056-target-loongarch-Add-timer-information-dump-support.patch
+- Patch0058: 0057-target-loongarch-meson-move-gdbstub.c-to-loongarch.s.patch
+- Patch0059: 0058-target-loongarch-move-translate-modules-to-tcg.patch
+- Patch0060: 0059-linux-headers-Update-to-Linux-v6.7-rc5.patch
+- Patch0061: 0060-linux-headers-Synchronize-linux-headers-from-linux-v.patch
+- Patch0062: 0061-target-loongarch-Define-some-kvm_arch-interfaces.patch
+- Patch0063: 0062-target-loongarch-Supplement-vcpu-env-initial-when-vc.patch
+- Patch0064: 0063-target-loongarch-Implement-kvm-get-set-registers.patch
+- Patch0065: 0064-target-loongarch-Implement-kvm_arch_init-function.patch
+- Patch0066: 0065-target-loongarch-Implement-kvm_arch_init_vcpu.patch
+- Patch0067: 0066-target-loongarch-Implement-kvm_arch_handle_exit.patch
+- Patch0068: 0067-target-loongarch-Restrict-TCG-specific-code.patch
+- Patch0069: 0068-target-loongarch-Implement-set-vcpu-intr-for-kvm.patch
+- Patch0070: 0069-target-loongarch-Add-loongarch-kvm-into-meson-build.patch
+- Patch0071: 0070-hw-intc-loongarch_ipi-Use-MemTxAttrs-interface-for-i.patch
+- Patch0072: 0071-hw-loongarch-virt-Set-iocsr-address-space-per-board-.patch
+- Patch0073: 0072-hw-intc-loongarch_extioi-Add-dynamic-cpu-number-supp.patch
+- Patch0074: 0073-hw-intc-loongarch_extioi-Add-vmstate-post_load-suppo.patch
+- Patch0075: 0074-configure-Add-linux-header-compile-support-for-Loong.patch
+- Patch0076: 0075-target-loongarch-Set-cpuid-CSR-register-only-once-wi.patch
+- Patch0077: 0076-target-loongarch-kvm-Enable-LSX-LASX-extension.patch
+- Patch0078: 0077-target-loongarch-Fix-qtest-test-hmp-error-when-KVM-o.patch
+- Patch0079: 0078-loongarch-Change-the-UEFI-loading-mode-to-loongarch.patch
+- Patch0080: 0079-target-loongarch-Fix-tlb-huge-page-loading-issue.patch
+- Patch0081: 0080-target-loongarch-Fix-qemu-loongarch64-hang-when-exec.patch
+- Patch0082: 0081-target-loongarch-kvm-Add-software-breakpoint-support.patch
+- Patch0083: 0082-hw-intc-loongarch_extioi-Add-virt-extension-support.patch
+- Patch0084: 0083-target-loongarch-kvm-sync-kernel-header-files.patch
+- Patch0085: 0084-hw-intc-loongarch_extioi-Add-virt-extension-support-.patch
+- Patch0087: 0085-target-loongarch-kvm-Add-pmu-support.patch
+- Patch0087: 0086-target-loongarch-Fix-qemu-system-loongarch64-assert-.patch
+- Patch0088: 0087-target-loongarch-kvm-Fix-VM-recovery-from-disk-failu.patch
+- Patch0089: 0088-target-loongarch-kvm-fpu-save-the-vreg-registers-hig.patch
+  (Add LoongArch features and bugfixes)
+
 * Thu Jun 06 2024 Yanjing Zhou <zhouyanjing@hygon.cn> - 8.2.2-6
 - Add Hygon Dhyana-v3 and Dharma CPU model
 
