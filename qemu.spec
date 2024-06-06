@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -196,6 +196,8 @@ Patch0050: 0049-target-i386-csv-Add-support-to-migrate-the-outgoing-.patch
 Patch0051: 0050-target-i386-csv-Add-support-to-migrate-the-incoming-.patch
 Patch0052: 0051-target-i386-sev-Fix-incompatibility-between-SEV-and-.patch
 Patch0053: 0052-target-i386-sev-Add-support-for-reuse-ASID-for-diffe.patch
+Patch0054: 0053-newfeature-vfio-add-vfio-based-mediated-hct-support.patch
+Patch0055: 0054-optimization-hct-Change-the-value-of-variable-MAX_CC.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1936,6 +1938,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Jun 5 2024 Depei Yang <yangdepei@hygon.cn> - 8.2.2-5
+- Support HCT
+
 * Mon May 20 2024 Liyang Han <hanliyang@hygon.cn> - 8.2.2-4
 - Fix GET_ID API incompatibility issue, support CSV reuse ASID
 
