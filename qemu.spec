@@ -132,7 +132,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 5%{?dist}
+Release: 6%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -198,6 +198,8 @@ Patch0052: 0051-target-i386-sev-Fix-incompatibility-between-SEV-and-.patch
 Patch0053: 0052-target-i386-sev-Add-support-for-reuse-ASID-for-diffe.patch
 Patch0054: 0053-newfeature-vfio-add-vfio-based-mediated-hct-support.patch
 Patch0055: 0054-optimization-hct-Change-the-value-of-variable-MAX_CC.patch
+Patch0056: 0055-target-i386-Add-Hygon-Dhyana-v3-CPU-model.patch
+Patch0057: 0056-target-i386-Add-new-Hygon-Dharma-CPU-model.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1938,6 +1940,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Jun 06 2024 Yanjing Zhou <zhouyanjing@hygon.cn> - 8.2.2-6
+- Add Hygon Dhyana-v3 and Dharma CPU model
+
 * Wed Jun 5 2024 Depei Yang <yangdepei@hygon.cn> - 8.2.2-5
 - Support HCT
 
