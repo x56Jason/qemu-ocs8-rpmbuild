@@ -1,0 +1,43 @@
+From a44839a013a51345c5c12c931064b53da75b516a Mon Sep 17 00:00:00 2001
+From: Yanjing Zhou <zhouyanjing@hygon.cn>
+Date: Tue, 4 Jun 2024 14:33:47 +0800
+Subject: [PATCH 1/2] target/i386: Add Hygon Dhyana-v3 CPU model
+
+Add the following feature bits for Dhyana CPU model:
+perfctr-core, clzero, xsaveerptr, aes, pclmulqdq, sha-ni
+
+Disable xsaves feature bit for Erratum 1386
+
+Signed-off-by: Yanjing Zhou <zhouyanjing@hygon.cn>
+---
+ target/i386/cpu.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index c01943ee6..1da8732c3 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -4658,6 +4658,20 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+                   { /* end of list */ }
+               },
+             },
++            { .version = 3,
++              .props = (PropValue[]) {
++                  { "xsaves", "off" },
++                  { "perfctr-core", "on" },
++                  { "clzero", "on" },
++                  { "xsaveerptr", "on" },
++                  { "aes", "on" },
++                  { "pclmulqdq", "on" },
++                  { "sha-ni", "on" },
++                  { "model-id",
++                      "Hygon Dhyana-v3 processor" },
++                  { /* end of list */ }
++              },
++            },
+             { /* end of list */ }
+         }
+     },
+-- 
+2.41.1
+
