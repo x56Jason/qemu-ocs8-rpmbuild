@@ -1,0 +1,43 @@
+From acc4c06ed8e754f73974bddc39a877f6b5dea867 Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Tue, 14 May 2024 19:07:52 +0800
+Subject: [PATCH 2/2] target/loongarch/kvm: fpu save the vreg registers high
+ 192bit
+
+On kvm side, get_fpu/set_fpu save the vreg registers high 192bits,
+but QEMU missing.
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Message-Id: <20240514110752.989572-1-gaosong@loongson.cn>
+---
+ target/loongarch/kvm/kvm.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/target/loongarch/kvm/kvm.c b/target/loongarch/kvm/kvm.c
+index bc75552d0f..8e6e27c8bf 100644
+--- a/target/loongarch/kvm/kvm.c
++++ b/target/loongarch/kvm/kvm.c
+@@ -436,6 +436,9 @@ static int kvm_loongarch_get_regs_fp(CPUState *cs)
+     env->fcsr0 = fpu.fcsr;
+     for (i = 0; i < 32; i++) {
+         env->fpr[i].vreg.UD[0] = fpu.fpr[i].val64[0];
++        env->fpr[i].vreg.UD[1] = fpu.fpr[i].val64[1];
++        env->fpr[i].vreg.UD[2] = fpu.fpr[i].val64[2];
++        env->fpr[i].vreg.UD[3] = fpu.fpr[i].val64[3];
+     }
+     for (i = 0; i < 8; i++) {
+         env->cf[i] = fpu.fcc & 0xFF;
+@@ -455,6 +458,9 @@ static int kvm_loongarch_put_regs_fp(CPUState *cs)
+     fpu.fcc = 0;
+     for (i = 0; i < 32; i++) {
+         fpu.fpr[i].val64[0] = env->fpr[i].vreg.UD[0];
++        fpu.fpr[i].val64[1] = env->fpr[i].vreg.UD[1];
++        fpu.fpr[i].val64[2] = env->fpr[i].vreg.UD[2];
++        fpu.fpr[i].val64[3] = env->fpr[i].vreg.UD[3];
+     }
+ 
+     for (i = 0; i < 8; i++) {
+-- 
+2.34.1
+

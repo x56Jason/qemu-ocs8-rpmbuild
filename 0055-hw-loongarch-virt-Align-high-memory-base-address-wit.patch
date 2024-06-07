@@ -1,0 +1,39 @@
+From 70e7ffec16e91138309ad3f76588cbd10c084394 Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Mon, 27 Nov 2023 12:02:31 +0800
+Subject: [PATCH] hw/loongarch/virt: Align high memory base address with
+ super page size
+
+With LoongArch virt machine, there is low memory space with region
+0--0x10000000, and high memory space with started from 0x90000000.
+High memory space is aligned with 256M, it will be better if it is
+aligned with 1G, which is super page aligned for 4K page size.
+
+Currently linux kernel and uefi bios has no limitation with high
+memory base address, it is ok to set high memory base address
+with 0x80000000.
+
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20231127040231.4123715-1-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ include/hw/loongarch/virt.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/hw/loongarch/virt.h b/include/hw/loongarch/virt.h
+index 674f4655e0..db0831b471 100644
+--- a/include/hw/loongarch/virt.h
++++ b/include/hw/loongarch/virt.h
+@@ -25,7 +25,7 @@
+ 
+ #define VIRT_LOWMEM_BASE        0
+ #define VIRT_LOWMEM_SIZE        0x10000000
+-#define VIRT_HIGHMEM_BASE       0x90000000
++#define VIRT_HIGHMEM_BASE       0x80000000
+ #define VIRT_GED_EVT_ADDR       0x100e0000
+ #define VIRT_GED_MEM_ADDR       (VIRT_GED_EVT_ADDR + ACPI_GED_EVT_SEL_LEN)
+ #define VIRT_GED_REG_ADDR       (VIRT_GED_MEM_ADDR + MEMORY_HOTPLUG_IO_LEN)
+-- 
+2.33.0
+
