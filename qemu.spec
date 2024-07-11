@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 7%{?dist}
+Release: 8%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -698,7 +698,6 @@ This package provides the QEMU system emulator for Loongarch64.
 %package system-loongarch64-core
 Summary: QEMU system emulator for Loongarch64
 Requires: %{name}-common = %{version}-%{release}
-Requires: seavgabios-bin
 Requires: edk2-loongarch64
 
 %description system-loongarch64-core
@@ -1976,6 +1975,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Jul 9 2024 Xiaotian Wu <wuxiaotian@loongson.cn> - 8.2.2-8
+- [Type] bugfix
+- [DESC] Fix requires for system-loongarch64-core
+
 * Thu Jun 6 2024 Song Gao <gaosong@loongson.cn> - 8.2.2-7
 - Patch0056: 0055-hw-loongarch-virt-Align-high-memory-base-address-wit.patch
 - Patch0057: 0056-target-loongarch-Add-timer-information-dump-support.patch
