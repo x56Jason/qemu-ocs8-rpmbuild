@@ -1,0 +1,99 @@
+From b68928285ab3f69e3a3d0180f45c6ef593539f46 Mon Sep 17 00:00:00 2001
+From: Binbin Wu <binbin.wu@linux.intel.com>
+Date: Fri, 12 Jan 2024 14:00:42 +0800
+Subject: [PATCH 93/93] target/i386: add control bits support for LAM
+
+commit 0117067131f99acaab4f4d2cca0290c5510e37cf upstream.
+
+LAM uses CR3[61] and CR3[62] to configure/enable LAM on user pointers.
+LAM uses CR4[28] to configure/enable LAM on supervisor pointers.
+
+For CR3 LAM bits, no additional handling needed:
+- TCG
+  LAM is not supported for TCG of target-i386.  helper_write_crN() and
+  helper_vmrun() check max physical address bits before calling
+  cpu_x86_update_cr3(), no change needed, i.e. CR3 LAM bits are not allowed
+  to be set in TCG.
+- gdbstub
+  x86_cpu_gdb_write_register() will call cpu_x86_update_cr3() to update cr3.
+  Allow gdb to set the LAM bit(s) to CR3, if vcpu doesn't support LAM,
+  KVM_SET_SREGS will fail as other reserved bits.
+
+For CR4 LAM bit, its reservation depends on vcpu supporting LAM feature or
+not.
+- TCG
+  LAM is not supported for TCG of target-i386.  helper_write_crN() and
+  helper_vmrun() check CR4 reserved bit before calling cpu_x86_update_cr4(),
+  i.e. CR4 LAM bit is not allowed to be set in TCG.
+- gdbstub
+  x86_cpu_gdb_write_register() will call cpu_x86_update_cr4() to update cr4.
+  Mask out LAM bit on CR4 if vcpu doesn't support LAM.
+- x86_cpu_reset_hold() doesn't need special handling.
+
+Intel-SIG: commit 0117067131f9 target/i386: add control bits support for
+LAM
+Backport Qemu Linear Address Masking (LAM) support.
+
+Signed-off-by: Binbin Wu <binbin.wu@linux.intel.com>
+Tested-by: Xuelian Guo <xuelian.guo@intel.com>
+Reviewed-by: Xiaoyao Li <xiaoyao.li@intel.com>
+Reviewed-by: Zhao Liu <zhao1.liu@intel.com>
+Message-ID: <20240112060042.19925-3-binbin.wu@linux.intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+[ Zhiquan Li: amend commit log ]
+Signed-off-by: Zhiquan Li <zhiquan1.li@intel.com>
+---
+ target/i386/cpu.h    | 7 ++++++-
+ target/i386/helper.c | 4 ++++
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index 21f1414a1809..22230c4c1cc2 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -261,6 +261,7 @@ typedef enum X86Seg {
+ #define CR4_SMAP_MASK   (1U << 21)
+ #define CR4_PKE_MASK   (1U << 22)
+ #define CR4_PKS_MASK   (1U << 24)
++#define CR4_LAM_SUP_MASK (1U << 28)
+ 
+ #define CR4_RESERVED_MASK \
+ (~(target_ulong)(CR4_VME_MASK | CR4_PVI_MASK | CR4_TSD_MASK \
+@@ -269,7 +270,8 @@ typedef enum X86Seg {
+                 | CR4_OSFXSR_MASK | CR4_OSXMMEXCPT_MASK | CR4_UMIP_MASK \
+                 | CR4_LA57_MASK \
+                 | CR4_FSGSBASE_MASK | CR4_PCIDE_MASK | CR4_OSXSAVE_MASK \
+-                | CR4_SMEP_MASK | CR4_SMAP_MASK | CR4_PKE_MASK | CR4_PKS_MASK))
++                | CR4_SMEP_MASK | CR4_SMAP_MASK | CR4_PKE_MASK | CR4_PKS_MASK \
++                | CR4_LAM_SUP_MASK))
+ 
+ #define DR6_BD          (1 << 13)
+ #define DR6_BS          (1 << 14)
+@@ -2532,6 +2534,9 @@ static inline uint64_t cr4_reserved_bits(CPUX86State *env)
+     if (!(env->features[FEAT_7_0_ECX] & CPUID_7_0_ECX_PKS)) {
+         reserved_bits |= CR4_PKS_MASK;
+     }
++    if (!(env->features[FEAT_7_1_EAX] & CPUID_7_1_EAX_LAM)) {
++        reserved_bits |= CR4_LAM_SUP_MASK;
++    }
+     return reserved_bits;
+ }
+ 
+diff --git a/target/i386/helper.c b/target/i386/helper.c
+index 2070dd0dda1f..1da7a7d315c3 100644
+--- a/target/i386/helper.c
++++ b/target/i386/helper.c
+@@ -219,6 +219,10 @@ void cpu_x86_update_cr4(CPUX86State *env, uint32_t new_cr4)
+         new_cr4 &= ~CR4_PKS_MASK;
+     }
+ 
++    if (!(env->features[FEAT_7_1_EAX] & CPUID_7_1_EAX_LAM)) {
++        new_cr4 &= ~CR4_LAM_SUP_MASK;
++    }
++
+     env->cr[4] = new_cr4;
+     env->hflags = hflags;
+ 
+-- 
+2.39.3
+

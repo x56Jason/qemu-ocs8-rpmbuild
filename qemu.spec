@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -240,6 +240,8 @@ Patch0089: 0088-target-loongarch-kvm-fpu-save-the-vreg-registers-hig.patch
 
 Patch0090: 0089-target-i386-Add-Hygon-Dhyana-v3-CPU-model.patch
 Patch0091: 0090-target-i386-Add-new-Hygon-Dharma-CPU-model.patch
+Patch0092: 0092-target-i386-add-support-for-LAM-in-CPUID-enumeration.patch
+Patch0093: 0093-target-i386-add-control-bits-support-for-LAM.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1975,6 +1977,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Tue Aug 13 2024 Zhiquan Li <zhiquan1.li@intel.com> - 8.2.2-11
+- [Type] other
+- [DESC] Backport LAM support
+
 * Fri Aug 16 2024 OpenCloudOS Release Engineering <releng@opencloudos.tech> - 8.2.2-10
 - Rebuilt for loongarch release
 
