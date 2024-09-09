@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -242,6 +242,22 @@ Patch0090: 0089-target-i386-Add-Hygon-Dhyana-v3-CPU-model.patch
 Patch0091: 0090-target-i386-Add-new-Hygon-Dharma-CPU-model.patch
 Patch0092: 0092-target-i386-add-support-for-LAM-in-CPUID-enumeration.patch
 Patch0093: 0093-target-i386-add-control-bits-support-for-LAM.patch
+
+#CVE-2024-3446
+Patch0094: hw-virtio-Introduce-virtio_bh_new_guarded-helper.patch
+Patch0095: hw-display-virtio-gpu-Protect-from-DMA-re-entrancy-b.patch
+Patch0096: hw-char-virtio-serial-bus-Protect-from-DMA-re-entran.patch
+Patch0097: hw-virtio-virtio-crypto-Protect-from-DMA-re-entrancy.patch
+
+#CVE-2024-3447
+Patch0098: hw-sd-sdhci-Do-not-update-TRNMOD-when-Command-Inhibi.patch
+
+#CVE-2024-7409
+Patch0099: nbd-server-Plumb-in-new-args-to-nbd_client_add.patch
+Patch0100: nbd-server-CVE-2024-7409-Cap-default-max-connections.patch
+Patch0101: nbd-server-CVE-2024-7409-Drop-non-negotiating-client.patch
+Patch0102: nbd-server-CVE-2024-7409-Close-stray-clients-at-serv.patch
+Patch0103: nbd-server-CVE-2024-7409-Avoid-use-after-free-when-c.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1977,7 +1993,19 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
-* Tue Aug 13 2024 Zhiquan Li <zhiquan1.li@intel.com> - 8.2.2-11
+* Mon Sep 9 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-12
+- nbd/server: CVE-2024-7409: Avoid use-after-free when closing server
+- nbd/server: CVE-2024-7409: Close stray clients at server-stop
+- nbd/server: CVE-2024-7409: Drop non-negotiating clients
+- nbd/server: CVE-2024-7409: Cap default max-connections to 100
+- nbd/server: Plumb in new args to nbd_client_add()
+- hw/sd/sdhci: Do not update TRNMOD when Command Inhibit (DAT) is set(CVE-2024-3447)
+- hw/virtio/virtio-crypto: Protect from DMA re-entrancy bugs(CVE-2024-3446)
+- hw/char/virtio-serial-bus: Protect from DMA re-entrancy bugs(CVE-2024-3446)
+- hw/display/virtio-gpu: Protect from DMA re-entrancy bugs(CVE-2024-3446)
+- hw/virtio: Introduce virtio_bh_new_guarded() helper
+
+* Sat Aug 17 2024 Zhiquan Li <zhiquan1.li@intel.com> - 8.2.2-11
 - [Type] other
 - [DESC] Backport LAM support
 
