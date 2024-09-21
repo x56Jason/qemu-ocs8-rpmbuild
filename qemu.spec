@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -258,6 +258,18 @@ Patch0100: nbd-server-CVE-2024-7409-Cap-default-max-connections.patch
 Patch0101: nbd-server-CVE-2024-7409-Drop-non-negotiating-client.patch
 Patch0102: nbd-server-CVE-2024-7409-Close-stray-clients-at-serv.patch
 Patch0103: nbd-server-CVE-2024-7409-Avoid-use-after-free-when-c.patch
+
+#CVE-2024-3567
+Patch0104: CVE-2024-3567-hw-net-net_tx_pkt-Fix-overrun-in-update_sctp_checksu.patch
+#CVE-2024-4467
+Patch0105: CVE-2024-4467-0001-qcow2-Don-t-open-data_file-with-BDRV_O_NO_IO.patch
+Patch0106: CVE-2024-4467-0002-iotests-244-Don-t-store-data-file-with-protocol-in-i.patch
+Patch0107: CVE-2024-4467-0003-iotests-270-Don-t-store-data-file-with-json-prefix-i.patch
+Patch0108: CVE-2024-4467-0004-block-Parse-filenames-only-when-explicitly-requested.patch
+#CVE-2024-6505
+Patch0109: CVE-2024-6505-virtio-net-Ensure-queue-index-fits-with-RSS.patch
+#CVE-2024-7730
+Patch0110: CVE-2024-7730-virtio-snd-add-max-size-bounds-check-in-input-cb.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -1993,6 +2005,15 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Sat Sep 21 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-13
+- hw/net/net_tx_pkt: Fix overrun in update_sctp_checksum()(CVE-2024-3567)
+- qcow2: Don't open data_file with BDRV_O_NO_IO(CVE-2024-4467)
+- iotests/244: Don't store data-file with protocol in image(CVE-2024-4467)
+- iotests/270: Don't store data-file with json: prefix in image(CVE-2024-4467)
+- block: Parse filenames only when explicitly requested(CVE-2024-4467)
+- virtio-net: Ensure queue index fits with RSS(CVE-2024-6505)
+- virtio-snd: add max size bounds check in input cb(CVE-2024-7730)
+
 * Mon Sep 9 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-12
 - nbd/server: CVE-2024-7409: Avoid use-after-free when closing server
 - nbd/server: CVE-2024-7409: Close stray clients at server-stop
