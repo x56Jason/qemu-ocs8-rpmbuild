@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 13%{?dist}
+Release: 14%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: http://wiki.qemu-project.org/download/%{name}-%{version}.tar.xz
@@ -2005,6 +2005,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Sep 26 2024 OpenCloudOS Release Engineering <releng@opencloudos.tech> - 8.2.2-14
+- Rebuilt for clarifying the packages requirement in BaseOS and AppStream
+
 * Sat Sep 21 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-13
 - hw/net/net_tx_pkt: Fix overrun in update_sctp_checksum()(CVE-2024-3567)
 - qcow2: Don't open data_file with BDRV_O_NO_IO(CVE-2024-4467)
