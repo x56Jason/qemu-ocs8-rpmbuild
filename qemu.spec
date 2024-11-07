@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -270,6 +270,8 @@ Patch0108: CVE-2024-4467-0004-block-Parse-filenames-only-when-explicitly-request
 Patch0109: CVE-2024-6505-virtio-net-Ensure-queue-index-fits-with-RSS.patch
 #CVE-2024-7730
 Patch0110: CVE-2024-7730-virtio-snd-add-max-size-bounds-check-in-input-cb.patch
+#Intel SPR-V3 platform
+Patch0111: 0094-target-i386-Introduce-SapphireRapids-v3-to-add-missi.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -2009,6 +2011,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Nov 07 2024 Quanxian Wang - <quanxian.wang@intel.com> - 8.2.2-16
+- [Type] other
+- [DESC] Backport target/i386: Introduce SapphireRapids-v3 to add missing features
+
 * Mon Oct 14 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-15
 - Update Source download url
 - Disable loongarch testcase
