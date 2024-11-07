@@ -1,0 +1,41 @@
+From b10b2481738304db13d28252e86c10555121a5b3 Mon Sep 17 00:00:00 2001
+From: Lei Wang <lei4.wang@intel.com>
+Date: Wed, 24 Apr 2024 03:29:12 -0400
+Subject: [PATCH] target/i386: Introduce SapphireRapids-v3 to add missing
+ features
+
+Add the missing features(ss, tsc-adjust, cldemote, movdiri, movdir64b) in
+the SapphireRapids-v3 CPU model.
+
+Signed-off-by: Lei Wang <lei4.wang@intel.com>
+Message-ID: <20240424072912.43188-1-lei4.wang@intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+---
+ target/i386/cpu.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index aa3b2d8391..e5723f232c 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -3970,6 +3970,17 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+                     { /* end of list */ }
+                 }
+             },
++            {
++                .version = 3,
++                .props = (PropValue[]) {
++                    { "ss", "on" },
++                    { "tsc-adjust", "on" },
++                    { "cldemote", "on" },
++                    { "movdiri", "on" },
++                    { "movdir64b", "on" },
++                    { /* end of list */ }
++                }
++            },
+             { /* end of list */ }
+         }
+     },
+-- 
+2.25.1
+
