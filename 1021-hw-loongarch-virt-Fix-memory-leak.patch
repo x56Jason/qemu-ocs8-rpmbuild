@@ -1,0 +1,47 @@
+From 8877420acc05cb0fd180e503b393836c5285b7fd Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Tue, 7 May 2024 10:22:39 +0800
+Subject: [PATCH 21/81] hw/loongarch/virt: Fix memory leak
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The char pointer 'ramName' point to a block of memory,
+but never free it. Use 'g_autofree' to automatically free it.
+
+Resolves: Coverity CID 1544773
+
+Fixes: 0cf1478d6 ("hw/loongarch: Add numa support")
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Peter Maydell <peter.maydell@linaro.org>
+Reviewed-by: Philippe Mathieu-Daudé <philmd@linaro.org>
+Message-ID: <20240507022239.3113987-1-gaosong@loongson.cn>
+Signed-off-by: Philippe Mathieu-Daudé <philmd@linaro.org>
+---
+ hw/loongarch/virt.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index 7657452428..2353780820 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -983,7 +983,6 @@ static void loongarch_init(MachineState *machine)
+     const CPUArchIdList *possible_cpus;
+     MachineClass *mc = MACHINE_GET_CLASS(machine);
+     CPUState *cpu;
+-    char *ramName = NULL;
+ 
+     if (!cpu_model) {
+         cpu_model = LOONGARCH_CPU_TYPE_NAME("la464");
+@@ -1042,7 +1041,7 @@ static void loongarch_init(MachineState *machine)
+ 
+     for (i = 1; i < nb_numa_nodes; i++) {
+         MemoryRegion *nodemem = g_new(MemoryRegion, 1);
+-        ramName = g_strdup_printf("loongarch.node%d.ram", i);
++        g_autofree char *ramName = g_strdup_printf("loongarch.node%d.ram", i);
+         memory_region_init_alias(nodemem, NULL, ramName, machine->ram,
+                                  offset,  numa_info[i].node_mem);
+         memory_region_add_subregion(address_space_mem, phyAddr, nodemem);
+-- 
+2.41.1
+

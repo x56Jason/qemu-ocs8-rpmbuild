@@ -1,0 +1,41 @@
+From a52edc342e8ba6a4103b56981f39fd09c31870ec Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Fri, 5 Jul 2024 10:18:39 +0800
+Subject: [PATCH 50/81] target/loongarch: Fix cpu_reset set wrong CSR_CRMD
+
+After cpu_reset, DATF in CSR_CRMD is 0, DATM is 0.
+See the manual[1] 6.4.
+
+  [1]: https://github.com/loongson/LoongArch-Documentation/releases/download/2023.04.20/LoongArch-Vol1-v1.10-EN.pdf
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Message-Id: <20240705021839.1004374-2-gaosong@loongson.cn>
+---
+ target/loongarch/cpu.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/target/loongarch/cpu.c b/target/loongarch/cpu.c
+index e3fcfce9bc..05fc68df01 100644
+--- a/target/loongarch/cpu.c
++++ b/target/loongarch/cpu.c
+@@ -554,13 +554,13 @@ static void loongarch_cpu_reset_hold(Object *obj)
+     env->fcsr0 = 0x0;
+ 
+     int n;
+-    /* Set csr registers value after reset */
++    /* Set csr registers value after reset, see the manual 6.4. */
+     env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, PLV, 0);
+     env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, IE, 0);
+     env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, DA, 1);
+     env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, PG, 0);
+-    env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, DATF, 1);
+-    env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, DATM, 1);
++    env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, DATF, 0);
++    env->CSR_CRMD = FIELD_DP64(env->CSR_CRMD, CSR_CRMD, DATM, 0);
+ 
+     env->CSR_EUEN = FIELD_DP64(env->CSR_EUEN, CSR_EUEN, FPE, 0);
+     env->CSR_EUEN = FIELD_DP64(env->CSR_EUEN, CSR_EUEN, SXE, 0);
+-- 
+2.41.1
+

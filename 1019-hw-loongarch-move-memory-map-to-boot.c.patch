@@ -1,0 +1,112 @@
+From fbec6d1a768212a51107650bbd0cf696464fbd6c Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Tue, 7 May 2024 16:51:35 +0200
+Subject: [PATCH 19/81] hw/loongarch: move memory map to boot.c
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Ensure that it can be used even if virt.c is not included in the build, as
+is the case for --without-default-devices.
+
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Acked-by: Richard Henderson <richard.henderson@linaro.org>
+Message-ID: <20240507145135.270803-1-pbonzini@redhat.com>
+Signed-off-by: Philippe Mathieu-Daudé <philmd@linaro.org>
+---
+ .gitlab-ci.d/buildtest.yml  |  5 +++--
+ hw/loongarch/boot.c         |  3 +++
+ hw/loongarch/virt.c         |  3 ---
+ include/hw/loongarch/boot.h | 10 ++++++++++
+ include/hw/loongarch/virt.h | 10 ----------
+ 5 files changed, 16 insertions(+), 15 deletions(-)
+
+diff --git a/.gitlab-ci.d/buildtest.yml b/.gitlab-ci.d/buildtest.yml
+index e39e327551..984c5bf29a 100644
+--- a/.gitlab-ci.d/buildtest.yml
++++ b/.gitlab-ci.d/buildtest.yml
+@@ -579,8 +579,9 @@ build-tci:
+     - make check-tcg
+ 
+ # Check our reduced build configurations
+-# requires libfdt: aarch64, arm, i386, loongarch64, x86_64
+-# does not build without boards: i386, loongarch64, x86_64
++# requires libfdt: aarch64, arm, i386, loongarch64, microblaze, microblazeel,
++#   mips64el, or1k, ppc, ppc64, riscv32, riscv64, rx, x86_64
++# does not build without boards: i386, s390x, sh4, sh4eb, x86_64
+ build-without-defaults:
+   extends: .native_build_job_template
+   needs:
+diff --git a/hw/loongarch/boot.c b/hw/loongarch/boot.c
+index 7d1630b2e7..03f6301a77 100644
+--- a/hw/loongarch/boot.c
++++ b/hw/loongarch/boot.c
+@@ -15,6 +15,9 @@
+ #include "sysemu/reset.h"
+ #include "sysemu/qtest.h"
+ 
++struct memmap_entry *memmap_table;
++unsigned memmap_entries;
++
+ ram_addr_t initrd_offset;
+ uint64_t initrd_size;
+ 
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index 9374f31ee4..02d50843f8 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -549,9 +549,6 @@ static void virt_powerdown_req(Notifier *notifier, void *opaque)
+     acpi_send_event(s->acpi_ged, ACPI_POWER_DOWN_STATUS);
+ }
+ 
+-struct memmap_entry *memmap_table;
+-unsigned memmap_entries;
+-
+ static void memmap_add_entry(uint64_t address, uint64_t length, uint32_t type)
+ {
+     /* Ensure there are no duplicate entries. */
+diff --git a/include/hw/loongarch/boot.h b/include/hw/loongarch/boot.h
+index 4ebcc89dcf..b3b870df1f 100644
+--- a/include/hw/loongarch/boot.h
++++ b/include/hw/loongarch/boot.h
+@@ -104,6 +104,16 @@ struct loongarch_boot_info {
+     uint64_t a0, a1, a2;
+ };
+ 
++extern struct memmap_entry *memmap_table;
++extern unsigned memmap_entries;
++
++struct memmap_entry {
++    uint64_t address;
++    uint64_t length;
++    uint32_t type;
++    uint32_t reserved;
++};
++
+ void loongarch_load_kernel(MachineState *ms, struct loongarch_boot_info *info);
+ 
+ #endif /* HW_LOONGARCH_BOOT_H */
+diff --git a/include/hw/loongarch/virt.h b/include/hw/loongarch/virt.h
+index 673b57aa2b..36158c758f 100644
+--- a/include/hw/loongarch/virt.h
++++ b/include/hw/loongarch/virt.h
+@@ -37,16 +37,6 @@
+ 
+ #define FDT_BASE                0x100000
+ 
+-extern struct memmap_entry *memmap_table;
+-extern unsigned memmap_entries;
+-
+-struct memmap_entry {
+-    uint64_t address;
+-    uint64_t length;
+-    uint32_t type;
+-    uint32_t reserved;
+-};
+-
+ struct LoongArchMachineState {
+     /*< private >*/
+     MachineState parent_obj;
+-- 
+2.41.1
+

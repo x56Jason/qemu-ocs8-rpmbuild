@@ -1,0 +1,104 @@
+From dd815af95f25646e83b3347c8dcb6ae0f0abe1e7 Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Fri, 26 Apr 2024 17:15:42 +0800
+Subject: [PATCH 08/81] hw/loongarch: Init efi_fdt table
+
+The efi_system_table adds a efi_fdt configuration table.
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Message-Id: <20240426091551.2397867-9-gaosong@loongson.cn>
+---
+ hw/loongarch/boot.c         | 11 +++++++++++
+ hw/loongarch/virt.c         |  6 ++----
+ include/hw/loongarch/boot.h |  4 ++++
+ include/hw/loongarch/virt.h |  2 ++
+ 4 files changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/hw/loongarch/boot.c b/hw/loongarch/boot.c
+index c8b3e742b4..7d1630b2e7 100644
+--- a/hw/loongarch/boot.c
++++ b/hw/loongarch/boot.c
+@@ -113,6 +113,16 @@ static void init_efi_initrd_table(struct efi_system_table *systab,
+     initrd_table->size = initrd_size;
+ }
+ 
++static void init_efi_fdt_table(struct efi_system_table *systab)
++{
++    efi_guid_t tbl_guid = DEVICE_TREE_GUID;
++
++    /* efi_configuration_table 3 */
++    guidcpy(&systab->tables[2].guid, &tbl_guid);
++    systab->tables[2].table = (void *)FDT_BASE;
++    systab->nr_tables = 3;
++}
++
+ static void init_systab(struct loongarch_boot_info *info, void *p, void *start)
+ {
+     void *bp_tables_start;
+@@ -138,6 +148,7 @@ static void init_systab(struct loongarch_boot_info *info, void *p, void *start)
+                   sizeof(efi_memory_desc_t) * memmap_entries, 64 * KiB);
+     init_efi_initrd_table(systab, p, start);
+     p += ROUND_UP(sizeof(struct efi_initrd), 64 * KiB);
++    init_efi_fdt_table(systab);
+ 
+     systab->tables = (struct efi_configuration_table *)(bp_tables_start - start);
+ }
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index 48a7808f43..e7cf34726e 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -826,7 +826,6 @@ static void loongarch_init(MachineState *machine)
+     int nb_numa_nodes = machine->numa_state->num_nodes;
+     NodeInfo *numa_info = machine->numa_state->nodes;
+     int i;
+-    hwaddr fdt_base;
+     const CPUArchIdList *possible_cpus;
+     MachineClass *mc = MACHINE_GET_CLASS(machine);
+     CPUState *cpu;
+@@ -956,12 +955,11 @@ static void loongarch_init(MachineState *machine)
+      * Put the FDT into the memory map as a ROM image: this will ensure
+      * the FDT is copied again upon reset, even if addr points into RAM.
+      */
+-    fdt_base = 1 * MiB;
+     qemu_fdt_dumpdtb(machine->fdt, lams->fdt_size);
+-    rom_add_blob_fixed_as("fdt", machine->fdt, lams->fdt_size, fdt_base,
++    rom_add_blob_fixed_as("fdt", machine->fdt, lams->fdt_size, FDT_BASE,
+                           &address_space_memory);
+     qemu_register_reset_nosnapshotload(qemu_fdt_randomize_seeds,
+-            rom_ptr_for_as(&address_space_memory, fdt_base, lams->fdt_size));
++            rom_ptr_for_as(&address_space_memory, FDT_BASE, lams->fdt_size));
+ 
+     lams->bootinfo.ram_size = ram_size;
+     loongarch_load_kernel(machine, &lams->bootinfo);
+diff --git a/include/hw/loongarch/boot.h b/include/hw/loongarch/boot.h
+index 42d1ee3663..4ebcc89dcf 100644
+--- a/include/hw/loongarch/boot.h
++++ b/include/hw/loongarch/boot.h
+@@ -34,6 +34,10 @@ typedef struct {
+         EFI_GUID(0x5568e427, 0x68fc, 0x4f3d,  0xac, 0x74, \
+                  0xca, 0x55, 0x52, 0x31, 0xcc, 0x68)
+ 
++#define DEVICE_TREE_GUID \
++        EFI_GUID(0xb1b621d5, 0xf19c, 0x41a5,  0x83, 0x0b, \
++                 0xd9, 0x15, 0x2c, 0x69, 0xaa, 0xe0)
++
+ struct efi_config_table {
+     efi_guid_t guid;
+     uint64_t *ptr;
+diff --git a/include/hw/loongarch/virt.h b/include/hw/loongarch/virt.h
+index 2f9eaf4b0e..673b57aa2b 100644
+--- a/include/hw/loongarch/virt.h
++++ b/include/hw/loongarch/virt.h
+@@ -35,6 +35,8 @@
+ 
+ #define COMMAND_LINE_SIZE       512
+ 
++#define FDT_BASE                0x100000
++
+ extern struct memmap_entry *memmap_table;
+ extern unsigned memmap_entries;
+ 
+-- 
+2.41.1
+

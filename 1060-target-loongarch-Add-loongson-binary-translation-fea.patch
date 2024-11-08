@@ -1,0 +1,118 @@
+From 7a1069003ea6f37339a55ee6154c90c8594e6f34 Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Sun, 29 Sep 2024 15:04:04 +0800
+Subject: [PATCH 60/81] target/loongarch: Add loongson binary translation
+ feature
+
+Loongson Binary Translation (LBT) is used to accelerate binary
+translation, which contains 4 scratch registers (scr0 to scr3), x86/ARM
+eflags (eflags) and x87 fpu stack pointer (ftop).
+
+Now LBT feature is added in kvm mode, not supported in TCG mode since
+it is not emulated. Feature variable lbt is added with OnOffAuto type,
+If lbt feature is not supported with KVM host, it reports error if there
+is lbt=on command line.
+
+If there is no any command line about lbt parameter, it checks whether
+KVM host supports lbt feature and set the corresponding value in cpucfg.
+
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240929070405.235200-2-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ target/loongarch/cpu.c                | 56 +--------------------------
+ target/loongarch/loongarch-qmp-cmds.c |  2 +-
+ 2 files changed, 3 insertions(+), 55 deletions(-)
+
+diff --git a/target/loongarch/cpu.c b/target/loongarch/cpu.c
+index 12d971dbff..cc2c509bdb 100644
+--- a/target/loongarch/cpu.c
++++ b/target/loongarch/cpu.c
+@@ -695,48 +695,6 @@ static void loongarch_set_lasx(Object *obj, bool value, Error **errp)
+     }
+ }
+ 
+-static bool loongarch_get_pmu(Object *obj, Error **errp)
+-{
+-    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
+-
+-    return  !!(FIELD_EX32(cpu->env.cpucfg[6], CPUCFG6, PMP));
+-}
+-
+-static void loongarch_set_pmu(Object *obj, bool value,  Error **errp)
+-{
+-    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
+-
+-    cpu->env.cpucfg[6] = FIELD_DP32(cpu->env.cpucfg[6], CPUCFG6, PMP, value);
+-}
+-
+-static void loongarch_get_pmnum(Object *obj, Visitor *v,
+-                                const char *name, void *opaque,
+-                                Error **errp)
+-{
+-    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
+-    uint32_t value = FIELD_EX32(cpu->env.cpucfg[6], CPUCFG6, PMNUM);
+-
+-    visit_type_uint32(v, name, &value, errp);
+-}
+-
+-static void loongarch_set_pmnum(Object *obj, Visitor *v,
+-                                const char *name, void *opaque,
+-                                Error **errp)
+-{
+-    LoongArchCPU *cpu = LOONGARCH_CPU(obj);
+-    uint32_t *value= opaque;
+-
+-    if (!visit_type_uint32(v, name, value, errp)) {
+-        return;
+-    }
+-    if ((*value <= PMNUM_MAX) && (*value > 0)) {
+-        cpu->env.cpucfg[6] = FIELD_DP32(cpu->env.cpucfg[6], CPUCFG6, PMNUM, *value -1);
+-    } else {
+-        error_report("Performance counter number need be in [1- %d]\n", PMNUM_MAX);
+-        exit(EXIT_FAILURE);
+-    }
+-}
+-
+ static bool loongarch_get_lbt(Object *obj, Error **errp)
+ {
+     return LOONGARCH_CPU(obj)->lbt != ON_OFF_AUTO_OFF;
+@@ -757,19 +715,9 @@ void loongarch_cpu_post_init(Object *obj)
+                              loongarch_set_lsx);
+     object_property_add_bool(obj, "lasx", loongarch_get_lasx,
+                              loongarch_set_lasx);
+-
++    /* lbt is enabled only in kvm mode, not supported in tcg mode */
+     if (kvm_enabled()) {
+-        object_property_add_bool(obj, "pmu", loongarch_get_pmu,
+-                                 loongarch_set_pmu);
+-        if (FIELD_EX32(cpu->env.cpucfg[6], CPUCFG6, PMP)) {
+-            uint32_t value = 4;
+-            object_property_add(obj, "pmnum", "uint32",
+-                                loongarch_get_pmnum,
+-                                loongarch_set_pmnum, NULL,
+-                                (void *)&value);
+-        }
+-
+-	cpu->lbt = ON_OFF_AUTO_AUTO;
++        cpu->lbt = ON_OFF_AUTO_AUTO;
+         object_property_add_bool(obj, "lbt", loongarch_get_lbt,
+                                  loongarch_set_lbt);
+         object_property_set_description(obj, "lbt",
+diff --git a/target/loongarch/loongarch-qmp-cmds.c b/target/loongarch/loongarch-qmp-cmds.c
+index 644b528824..e5c563b98e 100644
+--- a/target/loongarch/loongarch-qmp-cmds.c
++++ b/target/loongarch/loongarch-qmp-cmds.c
+@@ -42,7 +42,7 @@ CpuDefinitionInfoList *qmp_query_cpu_definitions(Error **errp)
+ }
+ 
+ static const char *cpu_model_advertised_features[] = {
+-    "lsx", "lasx", "lbt", "pmu", "pmnum", NULL
++    "lsx", "lasx", "lbt", NULL
+ };
+ 
+ CpuModelExpansionInfo *qmp_query_cpu_model_expansion(CpuModelExpansionType type,
+-- 
+2.41.1
+

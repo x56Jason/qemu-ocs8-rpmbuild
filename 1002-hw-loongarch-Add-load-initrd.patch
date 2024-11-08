@@ -1,0 +1,63 @@
+From 4bd6e495e80230466f8b9f2ab040dd0c5a2d010b Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Fri, 26 Apr 2024 17:15:36 +0800
+Subject: [PATCH 02/81] hw/loongarch: Add load initrd
+
+we load initrd ramdisk after kernel_high address
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Message-Id: <20240426091551.2397867-3-gaosong@loongson.cn>
+---
+ hw/loongarch/boot.c | 28 +++++++++++++++++++++++++++-
+ 1 file changed, 27 insertions(+), 1 deletion(-)
+
+diff --git a/hw/loongarch/boot.c b/hw/loongarch/boot.c
+index 9feed17db3..a5135fe542 100644
+--- a/hw/loongarch/boot.c
++++ b/hw/loongarch/boot.c
+@@ -22,7 +22,8 @@ static uint64_t cpu_loongarch_virt_to_phys(void *opaque, uint64_t addr)
+ 
+ static int64_t load_kernel_info(struct loongarch_boot_info *info)
+ {
+-    uint64_t kernel_entry, kernel_low, kernel_high;
++    uint64_t kernel_entry, kernel_low, kernel_high, initrd_size;
++    ram_addr_t initrd_offset;
+     ssize_t kernel_size;
+ 
+     kernel_size = load_elf(info->kernel_filename, NULL,
+@@ -37,6 +38,31 @@ static int64_t load_kernel_info(struct loongarch_boot_info *info)
+                      load_elf_strerror(kernel_size));
+         exit(1);
+     }
++
++    if (info->initrd_filename) {
++        initrd_size = get_image_size(info->initrd_filename);
++        if (initrd_size > 0) {
++            initrd_offset = ROUND_UP(kernel_high + 4 * kernel_size, 64 * KiB);
++
++            if (initrd_offset + initrd_size > info->ram_size) {
++                error_report("memory too small for initial ram disk '%s'",
++                             info->initrd_filename);
++                exit(1);
++            }
++
++            initrd_size = load_image_targphys(info->initrd_filename, initrd_offset,
++                                              info->ram_size - initrd_offset);
++        }
++
++        if (initrd_size == (target_ulong)-1) {
++            error_report("could not load initial ram disk '%s'",
++                         info->initrd_filename);
++            exit(1);
++        }
++    } else {
++        initrd_size = 0;
++    }
++
+     return kernel_entry;
+ }
+ 
+-- 
+2.41.1
+

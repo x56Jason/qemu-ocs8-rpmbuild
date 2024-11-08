@@ -1,0 +1,41 @@
+From 24b430828a9d1f474ceb074c06dc5620f73af3a9 Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Fri, 26 Apr 2024 17:15:43 +0800
+Subject: [PATCH 09/81] hw/loongarch: Fix fdt memory node wrong 'reg'
+
+The right fdt memory node like [1], not [2]
+
+  [1]
+        memory@0 {
+                device_type = "memory";
+                reg = <0x00 0x00 0x00 0x10000000>;
+        };
+  [2]
+        memory@0 {
+                device_type = "memory";
+                reg = <0x02 0x00 0x02 0x10000000>;
+        };
+
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240426091551.2397867-10-gaosong@loongson.cn>
+---
+ hw/loongarch/virt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index e7cf34726e..125408666a 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -359,7 +359,7 @@ static void fdt_add_memory_node(MachineState *ms,
+     char *nodename = g_strdup_printf("/memory@%" PRIx64, base);
+ 
+     qemu_fdt_add_subnode(ms->fdt, nodename);
+-    qemu_fdt_setprop_cells(ms->fdt, nodename, "reg", 2, base, 2, size);
++    qemu_fdt_setprop_cells(ms->fdt, nodename, "reg", 0, base, 0, size);
+     qemu_fdt_setprop_string(ms->fdt, nodename, "device_type", "memory");
+ 
+     if (ms->numa_state && ms->numa_state->num_nodes) {
+-- 
+2.41.1
+

@@ -1,0 +1,116 @@
+From 5d1e50600cc5cbf19a2a79b7e5c860d6dd6ec513 Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Fri, 26 Apr 2024 17:15:38 +0800
+Subject: [PATCH 04/81] hw/loongarch: Add init_cmdline
+
+Add init_cmline and set boot_info->a0, a1
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Message-Id: <20240426091551.2397867-5-gaosong@loongson.cn>
+---
+ hw/loongarch/boot.c         | 30 ++++++++++++++++++++++++++++++
+ include/hw/loongarch/virt.h |  2 ++
+ target/loongarch/cpu.h      |  2 ++
+ 3 files changed, 34 insertions(+)
+
+diff --git a/hw/loongarch/boot.c b/hw/loongarch/boot.c
+index fb6effbaff..127085bcc4 100644
+--- a/hw/loongarch/boot.c
++++ b/hw/loongarch/boot.c
+@@ -63,6 +63,16 @@ static const unsigned int slave_boot_code[] = {
+     0x4c000020,   /* jirl       $zero, $ra,0                   */
+ };
+ 
++static void init_cmdline(struct loongarch_boot_info *info, void *p, void *start)
++{
++    hwaddr cmdline_addr = p - start;
++
++    info->a0 = 1;
++    info->a1 = cmdline_addr;
++
++    memcpy(p, info->kernel_cmdline, COMMAND_LINE_SIZE);
++}
++
+ static uint64_t cpu_loongarch_virt_to_phys(void *opaque, uint64_t addr)
+ {
+     return addr & MAKE_64BIT_MASK(0, TARGET_PHYS_ADDR_SPACE_BITS);
+@@ -121,6 +131,10 @@ static void reset_load_elf(void *opaque)
+ 
+     cpu_reset(CPU(cpu));
+     if (env->load_elf) {
++	if (cpu == LOONGARCH_CPU(first_cpu)) {
++            env->gpr[4] = env->boot_info->a0;
++            env->gpr[5] = env->boot_info->a1;
++        }
+         cpu_set_pc(CPU(cpu), env->elf_address);
+     }
+ }
+@@ -158,8 +172,17 @@ static void loongarch_firmware_boot(LoongArchMachineState *lams,
+     fw_cfg_add_kernel_info(info, lams->fw_cfg);
+ }
+ 
++static void init_boot_rom(struct loongarch_boot_info *info, void *p)
++{
++    void *start = p;
++
++    init_cmdline(info, p, start);
++    p += COMMAND_LINE_SIZE;
++}
++
+ static void loongarch_direct_kernel_boot(struct loongarch_boot_info *info)
+ {
++    void *p, *bp;
+     int64_t kernel_addr = 0;
+     LoongArchCPU *lacpu;
+     CPUState *cs;
+@@ -173,6 +196,12 @@ static void loongarch_direct_kernel_boot(struct loongarch_boot_info *info)
+         }
+     }
+ 
++    /* Load cmdline and system tables at [0 - 1 MiB] */
++    p = g_malloc0(1 * MiB);
++    bp = p;
++    init_boot_rom(info, p);
++    rom_add_blob_fixed_as("boot_info", bp, 1 * MiB, 0, &address_space_memory);
++
+     /* Load slave boot code at pflash0 . */
+     void *boot_code = g_malloc0(VIRT_FLASH0_SIZE);
+     memcpy(boot_code, &slave_boot_code, sizeof(slave_boot_code));
+@@ -190,6 +219,7 @@ static void loongarch_direct_kernel_boot(struct loongarch_boot_info *info)
+     }
+ 
+     g_free(boot_code);
++    g_free(bp);
+ }
+ 
+ void loongarch_load_kernel(MachineState *ms, struct loongarch_boot_info *info)
+diff --git a/include/hw/loongarch/virt.h b/include/hw/loongarch/virt.h
+index 02c8234b8d..ffff075f63 100644
+--- a/include/hw/loongarch/virt.h
++++ b/include/hw/loongarch/virt.h
+@@ -33,6 +33,8 @@
+ #define VIRT_GED_MEM_ADDR       (VIRT_GED_EVT_ADDR + ACPI_GED_EVT_SEL_LEN)
+ #define VIRT_GED_REG_ADDR       (VIRT_GED_MEM_ADDR + MEMORY_HOTPLUG_IO_LEN)
+ 
++#define COMMAND_LINE_SIZE       512
++
+ struct LoongArchMachineState {
+     /*< private >*/
+     MachineState parent_obj;
+diff --git a/target/loongarch/cpu.h b/target/loongarch/cpu.h
+index 80cad24fa1..3c5180f5b6 100644
+--- a/target/loongarch/cpu.h
++++ b/target/loongarch/cpu.h
+@@ -364,6 +364,8 @@ typedef struct CPUArchState {
+     uint32_t mp_state;
+     /* Store ipistate to access from this struct */
+     DeviceState *ipistate;
++
++    struct loongarch_boot_info *boot_info;
+ #endif
+ } CPULoongArchState;
+ 
+-- 
+2.41.1
+
