@@ -1,0 +1,89 @@
+From 63fe4c8523b107b0bc5e429795be63e01a4954e6 Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Fri, 26 Apr 2024 17:15:46 +0800
+Subject: [PATCH 12/81] hw/loongarch: fdt adds pch_pic Controller
+
+fdt adds pch pic controller, we use 'loongson,pch-pic-1.0'
+
+See:
+https://github.com/torvalds/linux/blob/v6.7/drivers/irqchip/irq-loongson-pch-pic.c
+https://lore.kernel.org/r/20200528152757.1028711-4-jiaxun.yang@flygoat.com
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Message-Id: <20240426091551.2397867-13-gaosong@loongson.cn>
+---
+ hw/loongarch/virt.c        | 30 +++++++++++++++++++++++++++++-
+ include/hw/pci-host/ls7a.h |  1 +
+ 2 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index 3dd1aa5c2f..0f06cc80c3 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -182,6 +182,31 @@ static void fdt_add_eiointc_node(LoongArchMachineState *lams,
+     g_free(nodename);
+ }
+ 
++static void fdt_add_pch_pic_node(LoongArchMachineState *lams,
++                                 uint32_t *eiointc_phandle,
++                                 uint32_t *pch_pic_phandle)
++{
++    MachineState *ms = MACHINE(lams);
++    char *nodename;
++    hwaddr pch_pic_base = VIRT_PCH_REG_BASE;
++    hwaddr pch_pic_size = VIRT_PCH_REG_SIZE;
++
++    *pch_pic_phandle = qemu_fdt_alloc_phandle(ms->fdt);
++    nodename = g_strdup_printf("/platic@%" PRIx64, pch_pic_base);
++    qemu_fdt_add_subnode(ms->fdt, nodename);
++    qemu_fdt_setprop_cell(ms->fdt,  nodename, "phandle", *pch_pic_phandle);
++    qemu_fdt_setprop_string(ms->fdt, nodename, "compatible",
++                            "loongson,pch-pic-1.0");
++    qemu_fdt_setprop_cells(ms->fdt, nodename, "reg", 0,
++                           pch_pic_base, 0, pch_pic_size);
++    qemu_fdt_setprop(ms->fdt, nodename, "interrupt-controller", NULL, 0);
++    qemu_fdt_setprop_cell(ms->fdt, nodename, "#interrupt-cells", 2);
++    qemu_fdt_setprop_cell(ms->fdt, nodename, "interrupt-parent",
++                          *eiointc_phandle);
++    qemu_fdt_setprop_cell(ms->fdt, nodename, "loongson,pic-base-vec", 0);
++    g_free(nodename);
++}
++
+ static void fdt_add_flash_node(LoongArchMachineState *lams)
+ {
+     MachineState *ms = MACHINE(lams);
+@@ -605,7 +630,7 @@ static void loongarch_irq_init(LoongArchMachineState *lams)
+     CPULoongArchState *env;
+     CPUState *cpu_state;
+     int cpu, pin, i, start, num;
+-    uint32_t cpuintc_phandle, eiointc_phandle;
++    uint32_t cpuintc_phandle, eiointc_phandle, pch_pic_phandle;
+ 
+     /*
+      * The connection of interrupts:
+@@ -705,6 +730,9 @@ static void loongarch_irq_init(LoongArchMachineState *lams)
+         qdev_connect_gpio_out(DEVICE(d), i, qdev_get_gpio_in(extioi, i));
+     }
+ 
++    /* Add PCH PIC node */
++    fdt_add_pch_pic_node(lams, &eiointc_phandle, &pch_pic_phandle);
++
+     pch_msi = qdev_new(TYPE_LOONGARCH_PCH_MSI);
+     start   =  num;
+     num = EXTIOI_IRQS - start;
+diff --git a/include/hw/pci-host/ls7a.h b/include/hw/pci-host/ls7a.h
+index e753449593..fe260f0183 100644
+--- a/include/hw/pci-host/ls7a.h
++++ b/include/hw/pci-host/ls7a.h
+@@ -24,6 +24,7 @@
+ #define VIRT_PCH_REG_BASE        0x10000000UL
+ #define VIRT_IOAPIC_REG_BASE     (VIRT_PCH_REG_BASE)
+ #define VIRT_PCH_MSI_ADDR_LOW    0x2FF00000UL
++#define VIRT_PCH_REG_SIZE        0x400
+ 
+ /*
+  * GSI_BASE is hard-coded with 64 in linux kernel, else kernel fails to boot
+-- 
+2.41.1
+

@@ -1,0 +1,45 @@
+From 64d723fcc5427d82a84c9bd7bc9089ab872ba177 Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Wed, 15 May 2024 17:39:26 +0800
+Subject: [PATCH 29/81] hw/loongarch: Remove minimum and default memory size
+
+Some qtest test cases such as numa use default memory size of generic
+machine class, which is 128M by fault.
+
+Here generic default memory size is used, and also remove minimum memory
+size which is 1G originally.
+
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240515093927.3453674-6-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ hw/loongarch/virt.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index ddc0174ed1..872c7f23ab 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -1082,10 +1082,6 @@ static void virt_init(MachineState *machine)
+         cpu_model = LOONGARCH_CPU_TYPE_NAME("la464");
+     }
+ 
+-    if (ram_size < 1 * GiB) {
+-        error_report("ram_size must be greater than 1G.");
+-        exit(1);
+-    }
+     create_fdt(lvms);
+ 
+     /* Create IOCSR space */
+@@ -1374,7 +1370,6 @@ static void virt_class_init(ObjectClass *oc, void *data)
+     HotplugHandlerClass *hc = HOTPLUG_HANDLER_CLASS(oc);
+ 
+     mc->init = virt_init;
+-    mc->default_ram_size = 1 * GiB;
+     mc->default_cpu_type = LOONGARCH_CPU_TYPE_NAME("la464");
+     mc->default_ram_id = "loongarch.ram";
+     mc->max_cpus = LOONGARCH_MAX_CPUS;
+-- 
+2.41.1
+

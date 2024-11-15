@@ -1,0 +1,58 @@
+From 0ee06ba1bf3277c3704eca9cb182b548c9ceda39 Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Wed, 12 Jun 2024 11:36:37 +0800
+Subject: [PATCH 34/81] hw/loongarch/virt: Remove unused assignment
+
+There is abuse usage about local variable gap. Remove
+duplicated assignment and solve Coverity reported error.
+
+Resolves: Coverity CID 1546441
+Fixes: 3cc451cbce ("hw/loongarch: Refine fwcfg memory map")
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240612033637.167787-1-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ hw/loongarch/virt.c | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index 1d5cd92dde..5348dd3bbb 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -1040,7 +1040,6 @@ static void fw_cfg_add_memory(MachineState *ms)
+         memmap_add_entry(base, gap, 1);
+         size -= gap;
+         base = VIRT_HIGHMEM_BASE;
+-        gap = ram_size - VIRT_LOWMEM_SIZE;
+     }
+ 
+     if (size) {
+@@ -1053,17 +1052,17 @@ static void fw_cfg_add_memory(MachineState *ms)
+     }
+ 
+     /* add fw_cfg memory map of other nodes */
+-    size = ram_size - numa_info[0].node_mem;
+-    gap  = VIRT_LOWMEM_BASE + VIRT_LOWMEM_SIZE;
+-    if (base < gap && (base + size) > gap) {
++    if (numa_info[0].node_mem < gap && ram_size > gap) {
+         /*
+          * memory map for the maining nodes splited into two part
+-         *   lowram:  [base, +(gap - base))
+-         *   highram: [VIRT_HIGHMEM_BASE, +(size - (gap - base)))
++         * lowram:  [base, +(gap - numa_info[0].node_mem))
++         * highram: [VIRT_HIGHMEM_BASE, +(ram_size - gap))
+          */
+-        memmap_add_entry(base, gap - base, 1);
+-        size -= gap - base;
++        memmap_add_entry(base, gap - numa_info[0].node_mem, 1);
++        size = ram_size - gap;
+         base = VIRT_HIGHMEM_BASE;
++    } else {
++        size = ram_size - numa_info[0].node_mem;
+     }
+ 
+    if (size)
+-- 
+2.41.1
+

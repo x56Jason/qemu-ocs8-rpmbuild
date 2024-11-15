@@ -1,0 +1,50 @@
+From 38a45d4541e66df7414ac525816a78d3628979f9 Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Tue, 27 Aug 2024 11:58:07 +0800
+Subject: [PATCH 51/81] target/loongarch: Add compatible support about VM
+ reboot
+
+With edk2-stable202408 LoongArch UEFI bios, CSR PGD register is set only
+if its value is equal to zero for boot cpu, it causes reboot issue. Since
+CSR PGD register is changed with linux kernel, UEFI BIOS cannot use it.
+
+Add workaround to clear CSR registers relative with TLB in function
+loongarch_cpu_reset_hold(), so that VM can reboot with edk2-stable202408
+UEFI bios.
+
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240827035807.3326293-1-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ target/loongarch/cpu.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/target/loongarch/cpu.c b/target/loongarch/cpu.c
+index 05fc68df01..d1800421c1 100644
+--- a/target/loongarch/cpu.c
++++ b/target/loongarch/cpu.c
+@@ -580,6 +580,20 @@ static void loongarch_cpu_reset_hold(Object *obj)
+     env->CSR_TLBRERA = FIELD_DP64(env->CSR_TLBRERA, CSR_TLBRERA, ISTLBR, 0);
+     env->CSR_MERRCTL = FIELD_DP64(env->CSR_MERRCTL, CSR_MERRCTL, ISMERR, 0);
+     env->CSR_TID = cs->cpu_index;
++    /*
++     * Workaround for edk2-stable202408, CSR PGD register is set only if
++     * its value is equal to zero for boot cpu, it causes reboot issue.
++     *
++     * Here clear CSR registers relative with TLB.
++     */
++    env->CSR_PGDH = 0;
++    env->CSR_PGDL = 0;
++    env->CSR_PWCL = 0;
++    env->CSR_PWCH = 0;
++    env->CSR_STLBPS = 0;
++    env->CSR_EENTRY = 0;
++    env->CSR_TLBRENTRY = 0;
++    env->CSR_MERRENTRY = 0;
+ 
+     for (n = 0; n < 4; n++) {
+         env->CSR_DMW[n] = FIELD_DP64(env->CSR_DMW[n], CSR_DMW, PLV0, 0);
+-- 
+2.41.1
+

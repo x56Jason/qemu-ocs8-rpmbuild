@@ -1,0 +1,50 @@
+From ca1a7dcecd62322b3a7ad78942bd68fdc24b4bd6 Mon Sep 17 00:00:00 2001
+From: gaosong <gaosong@loongson.cn>
+Date: Mon, 9 Sep 2024 04:14:49 +0800
+Subject: [PATCH 81/81] hw/loongarch: fix cpu hotplug reset
+
+Signed-off-by: gaosong <gaosong@loongson.cn>
+---
+ hw/loongarch/boot.c         | 2 +-
+ hw/loongarch/virt.c         | 1 +
+ include/hw/loongarch/virt.h | 1 +
+ 3 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/hw/loongarch/boot.c b/hw/loongarch/boot.c
+index f258eefe9a..53dcefbb55 100644
+--- a/hw/loongarch/boot.c
++++ b/hw/loongarch/boot.c
+@@ -216,7 +216,7 @@ static int64_t load_kernel_info(struct loongarch_boot_info *info)
+     return kernel_entry;
+ }
+ 
+-static void reset_load_elf(void *opaque)
++void reset_load_elf(void *opaque)
+ {
+     LoongArchCPU *cpu = opaque;
+     CPULoongArchState *env = &cpu->env;
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index a27a988ce3..a460f650ff 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -1501,6 +1501,7 @@ static void virt_cpu_plug(HotplugHandler *hotplug_dev,
+         env = &(cpu->env);
+         env->address_space_iocsr = &lvms->as_iocsr;
+ 
++        qemu_register_reset(reset_load_elf, LOONGARCH_CPU(qemu_get_cpu(cs->cpu_index)));
+         env->ipistate = lvms->ipi;
+         if (!(kvm_enabled() && kvm_irqchip_in_kernel())) {
+             /* connect ipi irq to cpu irq, logic cpu index used here */
+diff --git a/include/hw/loongarch/virt.h b/include/hw/loongarch/virt.h
+index 168b40c31b..a79ad41663 100644
+--- a/include/hw/loongarch/virt.h
++++ b/include/hw/loongarch/virt.h
+@@ -86,4 +86,5 @@ struct LoongArchVirtMachineState {
+ #define TYPE_LOONGARCH_VIRT_MACHINE  MACHINE_TYPE_NAME("virt")
+ OBJECT_DECLARE_SIMPLE_TYPE(LoongArchVirtMachineState, LOONGARCH_VIRT_MACHINE)
+ void loongarch_acpi_setup(LoongArchVirtMachineState *lvms);
++void reset_load_elf(void *opaque);
+ #endif
+-- 
+2.41.1
+

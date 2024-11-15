@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 16%{?dist}
+Release: 17%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -272,6 +272,90 @@ Patch0109: CVE-2024-6505-virtio-net-Ensure-queue-index-fits-with-RSS.patch
 Patch0110: CVE-2024-7730-virtio-snd-add-max-size-bounds-check-in-input-cb.patch
 #Intel SPR-V3 platform
 Patch0111: 0094-target-i386-Introduce-SapphireRapids-v3-to-add-missi.patch
+
+
+# LoongArch patch since 9.1
+Patch1001: 1001-hw-loongarch-Move-boot-functions-to-boot.c.patch
+Patch1002: 1002-hw-loongarch-Add-load-initrd.patch
+Patch1003: 1003-hw-loongarch-Add-slave-cpu-boot_code.patch
+Patch1004: 1004-hw-loongarch-Add-init_cmdline.patch
+Patch1005: 1005-hw-loongarch-Init-efi_system_table.patch
+Patch1006: 1006-hw-loongarch-Init-efi_boot_memmap-table.patch
+Patch1007: 1007-hw-loongarch-Init-efi_initrd-table.patch
+Patch1008: 1008-hw-loongarch-Init-efi_fdt-table.patch
+Patch1009: 1009-hw-loongarch-Fix-fdt-memory-node-wrong-reg.patch
+Patch1010: 1010-hw-loongarch-fdt-adds-cpu-interrupt-controller-node.patch
+Patch1011: 1011-hw-loongarch-fdt-adds-Extend-I-O-Interrupt-Controlle.patch
+Patch1012: 1012-hw-loongarch-fdt-adds-pch_pic-Controller.patch
+Patch1013: 1013-hw-loongarch-fdt-adds-pch_msi-Controller.patch
+Patch1014: 1014-hw-loongarch-fdt-adds-pcie-irq_map-node.patch
+Patch1015: 1015-hw-loongarch-fdt-remove-unused-irqchip-node.patch
+Patch1016: 1016-hw-loongarch-Add-cells-missing-from-uart-node.patch
+Patch1017: 1017-hw-loongarch-Add-cells-missing-from-rtc-node.patch
+Patch1018: 1018-loongarch-switch-boards-to-default-y.patch
+Patch1019: 1019-hw-loongarch-move-memory-map-to-boot.c.patch
+Patch1020: 1020-hw-loongarch-Rename-LOONGARCH_MACHINE-with-LOONGARCH.patch
+Patch1021: 1021-hw-loongarch-virt-Fix-memory-leak.patch
+Patch1022: 1022-hw-loongarch-Rename-LoongArchMachineState-with-Loong.patch
+Patch1023: 1023-hw-loongarch-Refine-default-numa-id-calculation.patch
+Patch1024: 1024-hw-loongarch-Add-VM-mode-in-IOCSR-feature-register-i.patch
+Patch1025: 1025-hw-loongarch-Refine-acpi-srat-table-for-numa-memory.patch
+Patch1026: 1026-hw-loongarch-Refine-fadt-memory-table-for-numa-memor.patch
+Patch1027: 1027-hw-loongarch-Refine-fwcfg-memory-map.patch
+Patch1028: 1028-hw-loongarch-Refine-system-dram-memory-region.patch
+Patch1029: 1029-hw-loongarch-Remove-minimum-and-default-memory-size.patch
+Patch1030: 1030-tests-libqos-Add-loongarch-virt-machine-node.patch
+Patch1031: 1031-hw-loongarch-virt-Use-MemTxAttrs-interface-for-misc-.patch
+Patch1032: 1032-hw-loongarch-boot.c-fix-out-of-bound-reading.patch
+Patch1033: 1033-hw-loongarch-Change-the-tpm-support-by-default.patch
+Patch1034: 1034-hw-loongarch-virt-Remove-unused-assignment.patch
+Patch1035: 1035-hw-loongarch-Fix-length-for-lowram-in-ACPI-SRAT.patch
+Patch1036: 1036-hw-loongarch-Remove-default-enable-with-VIRTIO_VGA-d.patch
+Patch1037: 1037-hw-loongarch-virt-support-up-to-4-serial-ports.patch
+Patch1038: 1038-hw-loongarch-virt-pass-random-seed-to-fdt.patch
+Patch1039: 1039-hw-loongarch-Add-acpi-SPCR-table-support.patch
+Patch1040: 1040-hw-loongarch-virt-Add-description-for-virt-machine-t.patch
+Patch1041: 1041-hw-loongarch-virt-Add-FDT-table-support-with-acpi-ge.patch
+Patch1042: 1042-acpi-ged-Add-macro-for-acpi-sleep-control-register.patch
+Patch1043: 1043-hw-arm-virt-acpi-build.c-Migrate-SPCR-creation-to-co.patch
+Patch1044: 1044-target-loongarch-Add-TCG-macro-in-structure-CPUArchS.patch
+Patch1045: 1045-target-loongarch-Put-cpucfg-operation-before-CSR-reg.patch
+Patch1046: 1046-target-loongarch-Add-loongarch-vector-property-uncon.patch
+Patch1047: 1047-target-loongarch-kvm-Add-software-breakpoint-support.patch
+Patch1048: 1048-target-loongarch-Remove-avail_64-in-trans_srai_w-and.patch
+Patch1049: 1049-target-loongarch-Set-CSR_PRCFG1-and-CSR_PRCFG2-value.patch
+Patch1050: 1050-target-loongarch-Fix-cpu_reset-set-wrong-CSR_CRMD.patch
+Patch1051: 1051-target-loongarch-Add-compatible-support-about-VM-reb.patch
+Patch1052: 1052-target-loongarch-kvm-Add-vCPU-reset-function.patch
+Patch1053: 1053-target-loongarch-Support-QMP-dump-guest-memory.patch
+Patch1054: 1054-target-loongarch-fix-Werror-maybe-uninitialized-fals.patch
+Patch1055: 1055-target-loongarch-Use-explicit-little-endian-LD-ST-AP.patch
+Patch1056: 1056-target-loongarch-Avoid-bits-shift-exceeding-width-of.patch
+Patch1057: 1057-sync-loongarch-linux-headers.patch
+Patch1058: 1058-target-loongarch-Add-loongson-binary-translation-fea.patch
+Patch1059: 1059-target-loongarch-Implement-lbt-registers-save-restor.patch
+Patch1060: 1060-target-loongarch-Add-loongson-binary-translation-fea.patch
+Patch1061: 1061-target-loongarch-kvm-Implement-LoongArch-PMU-extensi.patch
+Patch1062: 1062-linux-headers-loongarch-Add-kvm_para.h-and-unistd_64.patch
+Patch1063: 1063-target-loongarch-Add-steal-time-support-on-migration.patch
+Patch1064: 1064-accel-kvm-Extract-common-KVM-vCPU-creation-parking-c.patch
+Patch1065: 1065-hw-acpi-Move-CPU-ctrl-dev-MMIO-region-len-macro-to-c.patch
+Patch1066: 1066-hw-acpi-Update-ACPI-GED-framework-to-support-vCPU-Ho.patch
+Patch1067: 1067-hw-acpi-Update-GED-_EVT-method-AML-with-CPU-scan.patch
+Patch1068: 1068-hw-acpi-Update-CPUs-AML-with-cpu-ctrl-dev-change.patch
+Patch1069: 1069-physmem-Add-helper-function-to-destroy-CPU-AddressSp.patch
+Patch1070: 1070-gdbstub-Add-helper-function-to-unregister-GDB-regist.patch
+Patch1071: 1071-accel-kvm-kvm-all-Fixes-the-missing-break-in-vCPU-un.patch
+Patch1072: 1072-hw-loongarch-virt-Add-CPU-topology-support.patch
+Patch1073: 1073-hw-loongarch-virt-Add-basic-CPU-plug-support.patch
+Patch1074: 1074-hw-loongarch-virt-Update-the-ACPI-table-for-hotplug-.patch
+Patch1075: 1075-hw-loongarch-Add-KVM-IPI-device-support.patch
+Patch1076: 1076-hw-loongarch-Add-KVM-extioi-device-support.patch
+Patch1077: 1077-hw-loongarch-Add-KVM-pch-pic-device-support.patch
+Patch1078: 1078-hw-loongarch-Add-KVM-pch-msi-device-support.patch
+Patch1079: 1079-target-loongarch-clean-code.patch
+Patch1080: 1080-hw-loongarch-boot-Use-warn_report-when-no-kernel-fil.patch
+Patch1081: 1081-hw-loongarch-fix-cpu-hotplug-reset.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -2011,6 +2095,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Nov 8 2024 gaosong <gaosong@loongson.cn> - 8.2.2-17
+- Update LoongArch from master
+- Add cpu hotplug support.
+
 * Thu Nov 07 2024 Quanxian Wang - <quanxian.wang@intel.com> - 8.2.2-16
 - [Type] other
 - [DESC] Backport target/i386: Introduce SapphireRapids-v3 to add missing features

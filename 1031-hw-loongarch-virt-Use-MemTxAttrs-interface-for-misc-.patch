@@ -1,0 +1,92 @@
+From 3ed2113ef9c02e5c0139922e21452b26df3d7804 Mon Sep 17 00:00:00 2001
+From: Song Gao <gaosong@loongson.cn>
+Date: Tue, 28 May 2024 16:38:54 +0800
+Subject: [PATCH 31/81] hw/loongarch/virt: Use MemTxAttrs interface for misc
+ ops
+
+Use MemTxAttrs interface read_with_attrs/write_with_attrs
+for virt_iocsr_misc_ops.
+
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Message-Id: <20240528083855.1912757-3-gaosong@loongson.cn>
+---
+ hw/loongarch/virt.c | 25 ++++++++++++++-----------
+ 1 file changed, 14 insertions(+), 11 deletions(-)
+
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index 6c73564491..1d5cd92dde 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -920,8 +920,9 @@ static void virt_firmware_init(LoongArchVirtMachineState *lvms)
+ }
+ 
+ 
+-static MemTxResult loongarch_qemu_write(void *opaque, hwaddr addr, uint64_t val,
+-                                        unsigned size, MemTxAttrs attrs)
++static MemTxResult virt_iocsr_misc_write(void *opaque, hwaddr addr,
++                                         uint64_t val, unsigned size,
++                                         MemTxAttrs attrs)
+ {
+     LoongArchVirtMachineState *lvms = LOONGARCH_VIRT_MACHINE(opaque);
+     uint64_t features;
+@@ -950,13 +951,13 @@ static MemTxResult loongarch_qemu_write(void *opaque, hwaddr addr, uint64_t val,
+     return MEMTX_OK;
+ }
+ 
+-static MemTxResult loongarch_qemu_read(void *opaque, hwaddr addr,
+-                                       uint64_t *data,
+-                                       unsigned size, MemTxAttrs attrs)
++static MemTxResult virt_iocsr_misc_read(void *opaque, hwaddr addr,
++                                        uint64_t *data,
++                                        unsigned size, MemTxAttrs attrs)
+ {
+     LoongArchVirtMachineState *lvms = LOONGARCH_VIRT_MACHINE(opaque);
++    uint64_t features;
+     uint64_t ret = 0;
+-    int features;
+ 
+     switch (addr) {
+     case VERSION_REG:
+@@ -967,7 +968,7 @@ static MemTxResult loongarch_qemu_read(void *opaque, hwaddr addr,
+         if (kvm_enabled()) {
+             ret |= BIT(IOCSRF_VM);
+         }
+-        return ret;
++        break;
+     case VENDOR_REG:
+         ret = 0x6e6f73676e6f6f4cULL; /* "Loongson" */
+         break;
+@@ -991,15 +992,17 @@ static MemTxResult loongarch_qemu_read(void *opaque, hwaddr addr,
+             ret |= BIT_ULL(IOCSRM_EXTIOI_INT_ENCODE);
+         }
+         break;
++    default:
++        g_assert_not_reached();
+     }
+ 
+     *data = ret;
+     return MEMTX_OK;
+ }
+ 
+-static const MemoryRegionOps loongarch_qemu_ops = {
+-    .read_with_attrs  = loongarch_qemu_read,
+-    .write_with_attrs = loongarch_qemu_write,
++static const MemoryRegionOps virt_iocsr_misc_ops = {
++    .read_with_attrs  = virt_iocsr_misc_read,
++    .write_with_attrs = virt_iocsr_misc_write,
+     .endianness = DEVICE_LITTLE_ENDIAN,
+     .valid = {
+         .min_access_size = 4,
+@@ -1090,7 +1093,7 @@ static void virt_init(MachineState *machine)
+                           machine, "iocsr", UINT64_MAX);
+     address_space_init(&lvms->as_iocsr, &lvms->system_iocsr, "IOCSR");
+     memory_region_init_io(&lvms->iocsr_mem, OBJECT(machine),
+-                          &loongarch_qemu_ops,
++                          &virt_iocsr_misc_ops,
+                           machine, "iocsr_misc", 0x428);
+     memory_region_add_subregion(&lvms->system_iocsr, 0, &lvms->iocsr_mem);
+ 
+-- 
+2.41.1
+

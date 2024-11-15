@@ -1,0 +1,48 @@
+From 7e3114dab5f3df6f1cd97c0a66c8c02dd44e8bd6 Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Tue, 14 May 2024 10:51:09 +0800
+Subject: [PATCH 24/81] hw/loongarch: Add VM mode in IOCSR feature register in
+ kvm mode
+
+If VM runs in kvm mode, VM mode is added in IOCSR feature register.
+So guest can detect kvm hypervisor type and enable possible pv functions.
+
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240514025109.3238398-1-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ hw/loongarch/virt.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/hw/loongarch/virt.c b/hw/loongarch/virt.c
+index 9816a7bf77..2465a3140f 100644
+--- a/hw/loongarch/virt.c
++++ b/hw/loongarch/virt.c
+@@ -10,6 +10,7 @@
+ #include "qapi/error.h"
+ #include "hw/boards.h"
+ #include "hw/char/serial.h"
++#include "sysemu/kvm.h"
+ #include "sysemu/sysemu.h"
+ #include "sysemu/qtest.h"
+ #include "sysemu/runstate.h"
+@@ -919,12 +920,11 @@ static MemTxResult loongarch_qemu_read(void *opaque, hwaddr addr,
+         ret = 0x11ULL;
+         break;
+     case FEATURE_REG:
+-        ret = 1ULL << IOCSRF_MSI | 1ULL << IOCSRF_EXTIOI |
+-              1ULL << IOCSRF_CSRIPI;
++        ret = BIT(IOCSRF_MSI) | BIT(IOCSRF_EXTIOI) | BIT(IOCSRF_CSRIPI);
+         if (kvm_enabled()) {
+-            ret |= 1ULL << IOCSRF_VM;
++            ret |= BIT(IOCSRF_VM);
+         }
+-        break;
++        return ret;
+     case VENDOR_REG:
+         ret = 0x6e6f73676e6f6f4cULL; /* "Loongson" */
+         break;
+-- 
+2.41.1
+

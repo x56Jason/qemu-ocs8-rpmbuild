@@ -1,0 +1,38 @@
+From 2a0644934f472d7be787773ef1c447cd96be2665 Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Fri, 23 Aug 2024 15:30:50 +0800
+Subject: [PATCH 36/81] hw/loongarch: Remove default enable with VIRTIO_VGA
+ device
+
+For virtio VGA deivce libvirt will select VIRTIO_VGA firstly rather than
+VIRTIO_GPU, VIRTIO_VGA device supports frame buffer however it requires
+legacy VGA compatible support. Frame buffer area 0xa0000 -- 0xc0000
+conflicts with low memory area 0 -- 0x10000000.
+
+Here remove default support for VIRTIO_VGA device, VIRTIO_GPU is prefered
+on LoongArch system. For frame buffer video card support, standard VGA can
+be used.
+
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240823073050.2619484-1-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ hw/loongarch/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/hw/loongarch/Kconfig b/hw/loongarch/Kconfig
+index b2a3adb7dc..40944a8365 100644
+--- a/hw/loongarch/Kconfig
++++ b/hw/loongarch/Kconfig
+@@ -4,7 +4,6 @@ config LOONGARCH_VIRT
+     depends on LOONGARCH64
+     select PCI
+     select PCI_EXPRESS_GENERIC_BRIDGE
+-    imply VIRTIO_VGA
+     imply PCI_DEVICES
+     imply NVDIMM
+     imply TPM_TIS_SYSBUS
+-- 
+2.41.1
+

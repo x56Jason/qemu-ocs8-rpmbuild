@@ -1,0 +1,65 @@
+From 777c08adfe67a7e6e352e57da25c0a80c342997f Mon Sep 17 00:00:00 2001
+From: Bibo Mao <maobibo@loongson.cn>
+Date: Thu, 22 Aug 2024 10:28:27 +0800
+Subject: [PATCH 52/81] target/loongarch/kvm: Add vCPU reset function
+
+KVM provides interface KVM_REG_LOONGARCH_VCPU_RESET to reset vCPU,
+it can be used to clear internal state about kvm kernel. vCPU reset
+function is added here for kvm mode.
+
+Signed-off-by: Bibo Mao <maobibo@loongson.cn>
+Reviewed-by: Song Gao <gaosong@loongson.cn>
+Message-Id: <20240822022827.2273534-1-maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ target/loongarch/cpu.c               | 2 +-
+ target/loongarch/kvm/kvm.c           | 5 ++++-
+ target/loongarch/kvm/kvm_loongarch.h | 2 +-
+ 3 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/target/loongarch/cpu.c b/target/loongarch/cpu.c
+index d1800421c1..aa8623ccfb 100644
+--- a/target/loongarch/cpu.c
++++ b/target/loongarch/cpu.c
+@@ -608,7 +608,7 @@ static void loongarch_cpu_reset_hold(Object *obj)
+     memset(env->tlb, 0, sizeof(env->tlb));
+ #endif
+     if (kvm_enabled()) {
+-        kvm_arch_reset_vcpu(env);
++        kvm_arch_reset_vcpu(cs);
+     }
+ #endif
+ 
+diff --git a/target/loongarch/kvm/kvm.c b/target/loongarch/kvm/kvm.c
+index 6f19b89ba8..b0650381d7 100644
+--- a/target/loongarch/kvm/kvm.c
++++ b/target/loongarch/kvm/kvm.c
+@@ -485,9 +485,12 @@ static int kvm_loongarch_put_regs_fp(CPUState *cs)
+     return ret;
+ }
+ 
+-void kvm_arch_reset_vcpu(CPULoongArchState *env)
++void kvm_arch_reset_vcpu(CPUState *cs)
+ {
++    CPULoongArchState *env = cpu_env(cs);
++
+     env->mp_state = KVM_MP_STATE_RUNNABLE;
++    kvm_set_one_reg(cs, KVM_REG_LOONGARCH_VCPU_RESET, 0);
+ }
+ 
+ static int kvm_loongarch_get_mpstate(CPUState *cs)
+diff --git a/target/loongarch/kvm/kvm_loongarch.h b/target/loongarch/kvm/kvm_loongarch.h
+index d945b6bb82..1051a341ec 100644
+--- a/target/loongarch/kvm/kvm_loongarch.h
++++ b/target/loongarch/kvm/kvm_loongarch.h
+@@ -11,6 +11,6 @@
+ #define QEMU_KVM_LOONGARCH_H
+ 
+ int  kvm_loongarch_set_interrupt(LoongArchCPU *cpu, int irq, int level);
+-void kvm_arch_reset_vcpu(CPULoongArchState *env);
++void kvm_arch_reset_vcpu(CPUState *cs);
+ 
+ #endif
+-- 
+2.41.1
+

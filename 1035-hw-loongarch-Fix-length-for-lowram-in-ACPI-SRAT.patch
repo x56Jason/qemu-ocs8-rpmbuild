@@ -1,0 +1,38 @@
+From d33ef6d2a99d54f6af5dd041be336f11f33d4643 Mon Sep 17 00:00:00 2001
+From: Jiaxun Yang <jiaxun.yang@flygoat.com>
+Date: Tue, 20 Aug 2024 19:42:33 +0100
+Subject: [PATCH 35/81] hw/loongarch: Fix length for lowram in ACPI SRAT
+
+The size of lowram should be "gap" instead of the whole node.
+
+This is failing kernel's sanity check:
+
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0xffffffff]
+[    0.000000] ACPI: SRAT: Node 0 PXM 0 [mem 0x80000000-0x16fffffff]
+[    0.000000] ACPI: SRAT: Node 1 PXM 1 [mem 0x170000000-0x26fffffff]
+[    0.000000] Warning: node 0 [mem 0x00000000-0xffffffff] overlaps with itself [mem 0x80000000-0x16fffffff]
+
+Fixes: fc100011f38d ("hw/loongarch: Refine acpi srat table for numa memory")
+Signed-off-by: Jiaxun Yang <jiaxun.yang@flygoat.com>
+Reviewed-by: Bibo Mao <maobibo@loongson.cn>
+Signed-off-by: Song Gao <gaosong@loongson.cn>
+---
+ hw/loongarch/acpi-build.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/hw/loongarch/acpi-build.c b/hw/loongarch/acpi-build.c
+index 6593476409..1a9d25fc51 100644
+--- a/hw/loongarch/acpi-build.c
++++ b/hw/loongarch/acpi-build.c
+@@ -218,7 +218,7 @@ build_srat(GArray *table_data, BIOSLinker *linker, MachineState *machine)
+          *   highram: [VIRT_HIGHMEM_BASE, +(len - gap))
+          */
+         if (len >= gap) {
+-            build_srat_memory(table_data, base, len, i, MEM_AFFINITY_ENABLED);
++            build_srat_memory(table_data, base, gap, i, MEM_AFFINITY_ENABLED);
+             len -= gap;
+             base = VIRT_HIGHMEM_BASE;
+             gap = machine->ram_size - VIRT_LOWMEM_SIZE;
+-- 
+2.41.1
+
