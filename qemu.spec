@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 18%{?dist}
+Release: 19%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -273,6 +273,17 @@ Patch0110: CVE-2024-7730-virtio-snd-add-max-size-bounds-check-in-input-cb.patch
 #Intel SPR-V3 platform
 Patch0111: 0094-target-i386-Introduce-SapphireRapids-v3-to-add-missi.patch
 
+# Hygon TKM
+Patch0112: 0095-hw-i386-pc-add-mem2-option-for-qemu.patch
+Patch0113: 0096-hw-misc-psp-support-tkm-use-mem2-memory.patch
+Patch0114: 0097-hw-misc-psp-Pin-the-hugepage-memory-specified-by-mem.patch
+
+# CVE-2024-8612
+Patch0115: 0001-system-physmem-Replace-qemu_mutex_lock-calls-with-QE.patch
+Patch0116: 0002-system-physmem-Propagate-AddressSpace-to-MapClient-h.patch
+Patch0117: 0003-system-physmem-Per-AddressSpace-bounce-buffering.patch
+Patch0118: 0004-softmmu-Support-concurrent-bounce-buffers.patch
+
 # LoongArch patch since 9.1
 Patch1001: 1001-hw-loongarch-Move-boot-functions-to-boot.c.patch
 Patch1002: 1002-hw-loongarch-Add-load-initrd.patch
@@ -355,11 +366,6 @@ Patch1078: 1078-hw-loongarch-Add-KVM-pch-msi-device-support.patch
 Patch1079: 1079-target-loongarch-clean-code.patch
 Patch1080: 1080-hw-loongarch-boot-Use-warn_report-when-no-kernel-fil.patch
 Patch1081: 1081-hw-loongarch-fix-cpu-hotplug-reset.patch
-
-# Hygon TKM
-Patch0112: 0095-hw-i386-pc-add-mem2-option-for-qemu.patch
-Patch0113: 0096-hw-misc-psp-support-tkm-use-mem2-memory.patch
-Patch0114: 0097-hw-misc-psp-Pin-the-hugepage-memory-specified-by-mem.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -2099,6 +2105,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Nov 18 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-19
+- Fix CVE-2024-8612
+
 * Tue Nov 12 2024 Mengbiao Xiong <xiongmengbiao@hygon.cn> - 8.2.2-18
 - [Type] other
 - [DESC] Support Hygon Trusted Key Management run on CSV Guest
