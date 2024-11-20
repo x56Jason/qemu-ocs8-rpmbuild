@@ -1,0 +1,203 @@
+From 5c62719710bab66a98f68ebdba333e2240ed6668 Mon Sep 17 00:00:00 2001
+From: Mattias Nissler <mnissler@rivosinc.com>
+Date: Thu, 7 Sep 2023 06:04:23 -0700
+Subject: [PATCH 2/3] system/physmem: Propagate AddressSpace to MapClient
+ helpers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Propagate AddressSpace handler to following helpers:
+- register_map_client()
+- unregister_map_client()
+- notify_map_clients[_locked]()
+
+Rename them using 'address_space_' prefix instead of 'cpu_'.
+
+The AddressSpace argument will be used in the next commit.
+
+Reviewed-by: Peter Xu <peterx@redhat.com>
+Tested-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
+Signed-off-by: Mattias Nissler <mnissler@rivosinc.com>
+Message-ID: <20240507094210.300566-2-mnissler@rivosinc.com>
+[PMD: Split patch, part 1/2]
+Signed-off-by: Philippe Mathieu-Daudé <philmd@linaro.org>
+---
+ include/exec/cpu-common.h |  2 --
+ include/exec/memory.h     | 26 ++++++++++++++++++++++++--
+ system/dma-helpers.c      |  4 ++--
+ system/physmem.c          | 24 ++++++++++++------------
+ 4 files changed, 38 insertions(+), 18 deletions(-)
+
+diff --git a/include/exec/cpu-common.h b/include/exec/cpu-common.h
+index 8bc397e251..815342d043 100644
+--- a/include/exec/cpu-common.h
++++ b/include/exec/cpu-common.h
+@@ -147,8 +147,6 @@ void *cpu_physical_memory_map(hwaddr addr,
+                               bool is_write);
+ void cpu_physical_memory_unmap(void *buffer, hwaddr len,
+                                bool is_write, hwaddr access_len);
+-void cpu_register_map_client(QEMUBH *bh);
+-void cpu_unregister_map_client(QEMUBH *bh);
+ 
+ bool cpu_physical_memory_is_io(hwaddr phys_addr);
+ 
+diff --git a/include/exec/memory.h b/include/exec/memory.h
+index dadb5cd65a..e1e0c5a3de 100644
+--- a/include/exec/memory.h
++++ b/include/exec/memory.h
+@@ -2946,8 +2946,8 @@ bool address_space_access_valid(AddressSpace *as, hwaddr addr, hwaddr len,
+  * May return %NULL and set *@plen to zero(0), if resources needed to perform
+  * the mapping are exhausted.
+  * Use only for reads OR writes - not for read-modify-write operations.
+- * Use cpu_register_map_client() to know when retrying the map operation is
+- * likely to succeed.
++ * Use address_space_register_map_client() to know when retrying the map
++ * operation is likely to succeed.
+  *
+  * @as: #AddressSpace to be accessed
+  * @addr: address within that address space
+@@ -2972,6 +2972,28 @@ void *address_space_map(AddressSpace *as, hwaddr addr,
+ void address_space_unmap(AddressSpace *as, void *buffer, hwaddr len,
+                          bool is_write, hwaddr access_len);
+ 
++/*
++ * address_space_register_map_client: Register a callback to invoke when
++ * resources for address_space_map() are available again.
++ *
++ * address_space_map may fail when there are not enough resources available,
++ * such as when bounce buffer memory would exceed the limit. The callback can
++ * be used to retry the address_space_map operation. Note that the callback
++ * gets automatically removed after firing.
++ *
++ * @as: #AddressSpace to be accessed
++ * @bh: callback to invoke when address_space_map() retry is appropriate
++ */
++void address_space_register_map_client(AddressSpace *as, QEMUBH *bh);
++
++/*
++ * address_space_unregister_map_client: Unregister a callback that has
++ * previously been registered and not fired yet.
++ *
++ * @as: #AddressSpace to be accessed
++ * @bh: callback to unregister
++ */
++void address_space_unregister_map_client(AddressSpace *as, QEMUBH *bh);
+ 
+ /* Internal functions, part of the implementation of address_space_read.  */
+ MemTxResult address_space_read_full(AddressSpace *as, hwaddr addr,
+diff --git a/system/dma-helpers.c b/system/dma-helpers.c
+index 9b221cf94e..74013308f5 100644
+--- a/system/dma-helpers.c
++++ b/system/dma-helpers.c
+@@ -169,7 +169,7 @@ static void dma_blk_cb(void *opaque, int ret)
+     if (dbs->iov.size == 0) {
+         trace_dma_map_wait(dbs);
+         dbs->bh = aio_bh_new(ctx, reschedule_dma, dbs);
+-        cpu_register_map_client(dbs->bh);
++        address_space_register_map_client(dbs->sg->as, dbs->bh);
+         goto out;
+     }
+ 
+@@ -197,7 +197,7 @@ static void dma_aio_cancel(BlockAIOCB *acb)
+     }
+ 
+     if (dbs->bh) {
+-        cpu_unregister_map_client(dbs->bh);
++        address_space_unregister_map_client(dbs->sg->as, dbs->bh);
+         qemu_bh_delete(dbs->bh);
+         dbs->bh = NULL;
+     }
+diff --git a/system/physmem.c b/system/physmem.c
+index 26f42f4a6f..b76b3d2184 100644
+--- a/system/physmem.c
++++ b/system/physmem.c
+@@ -3066,24 +3066,24 @@ QemuMutex map_client_list_lock;
+ static QLIST_HEAD(, MapClient) map_client_list
+     = QLIST_HEAD_INITIALIZER(map_client_list);
+ 
+-static void cpu_unregister_map_client_do(MapClient *client)
++static void address_space_unregister_map_client_do(MapClient *client)
+ {
+     QLIST_REMOVE(client, link);
+     g_free(client);
+ }
+ 
+-static void cpu_notify_map_clients_locked(void)
++static void address_space_notify_map_clients_locked(AddressSpace *as)
+ {
+     MapClient *client;
+ 
+     while (!QLIST_EMPTY(&map_client_list)) {
+         client = QLIST_FIRST(&map_client_list);
+         qemu_bh_schedule(client->bh);
+-        cpu_unregister_map_client_do(client);
++        address_space_unregister_map_client_do(client);
+     }
+ }
+ 
+-void cpu_register_map_client(QEMUBH *bh)
++void address_space_register_map_client(AddressSpace *as, QEMUBH *bh)
+ {
+     MapClient *client = g_malloc(sizeof(*client));
+ 
+@@ -3093,7 +3093,7 @@ void cpu_register_map_client(QEMUBH *bh)
+     /* Write map_client_list before reading in_use.  */
+     smp_mb();
+     if (!qatomic_read(&bounce.in_use)) {
+-        cpu_notify_map_clients_locked();
++        address_space_notify_map_clients_locked(as);
+     }
+ }
+ 
+@@ -3113,23 +3113,23 @@ void cpu_exec_init_all(void)
+     qemu_mutex_init(&map_client_list_lock);
+ }
+ 
+-void cpu_unregister_map_client(QEMUBH *bh)
++void address_space_unregister_map_client(AddressSpace *as, QEMUBH *bh)
+ {
+     MapClient *client;
+ 
+     QEMU_LOCK_GUARD(&map_client_list_lock);
+     QLIST_FOREACH(client, &map_client_list, link) {
+         if (client->bh == bh) {
+-            cpu_unregister_map_client_do(client);
++            address_space_unregister_map_client_do(client);
+             break;
+         }
+     }
+ }
+ 
+-static void cpu_notify_map_clients(void)
++static void address_space_notify_map_clients(AddressSpace *as)
+ {
+     QEMU_LOCK_GUARD(&map_client_list_lock);
+-    cpu_notify_map_clients_locked();
++    address_space_notify_map_clients_locked(as);
+ }
+ 
+ static bool flatview_access_valid(FlatView *fv, hwaddr addr, hwaddr len,
+@@ -3196,8 +3196,8 @@ flatview_extend_translation(FlatView *fv, hwaddr addr,
+  * May map a subset of the requested range, given by and returned in *plen.
+  * May return NULL if resources needed to perform the mapping are exhausted.
+  * Use only for reads OR writes - not for read-modify-write operations.
+- * Use cpu_register_map_client() to know when retrying the map operation is
+- * likely to succeed.
++ * Use address_space_register_map_client() to know when retrying the map
++ * operation is likely to succeed.
+  */
+ void *address_space_map(AddressSpace *as,
+                         hwaddr addr,
+@@ -3280,7 +3280,7 @@ void address_space_unmap(AddressSpace *as, void *buffer, hwaddr len,
+     memory_region_unref(bounce.mr);
+     /* Clear in_use before reading map_client_list.  */
+     qatomic_set_mb(&bounce.in_use, false);
+-    cpu_notify_map_clients();
++    address_space_notify_map_clients(as);
+ }
+ 
+ void *cpu_physical_memory_map(hwaddr addr,
+-- 
+2.41.0
+
