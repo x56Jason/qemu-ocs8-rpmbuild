@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 19%{?dist}
+Release: 20%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -1651,9 +1651,7 @@ rm -rf %{static_buildroot}
 pushd %{qemu_kvm_build}
 # loongarch qtest failed because mmap failed
 #   Added: 2024-10-29
-%ifnarch loongarch64
 %make_build check
-%endif
 popd
 
 %post -n qemu-guest-agent
@@ -2105,6 +2103,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Nov 25 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-20
+- Enable loongarch testcase
+
 * Mon Nov 18 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-19
 - Fix CVE-2024-8612
 
