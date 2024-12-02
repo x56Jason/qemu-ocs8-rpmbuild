@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -413,6 +413,9 @@ BuildRequires: pkgconfig(gbm)
 BuildRequires: perl-Test-Harness
 BuildRequires: libbpf-devel
 
+%ifarch loongarch64
+BuildRequires: libslirp-devel
+%endif
 
 %if "%{toolchain}" == "clang"
 BuildRequires: clang
@@ -1375,6 +1378,10 @@ run_configure \
 %endif
   --enable-virtfs \
   --enable-vnc-jpeg \
+%ifarch loongarch64
+  --enable-slirp \
+  --enable-slirp-smbd \
+%endif
   --enable-vte \
   --enable-vvfat \
   --enable-zstd \
@@ -2103,6 +2110,9 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Mon Dec 2 2024 Xianglai Li <lixianglai@loongson.cn> - 8.2.2-21
+- Enable netdev user mode
+
 * Mon Nov 25 2024 Chunsheng Luo <luffyluo@tencent.com> - 8.2.2-20
 - Enable loongarch testcase
 
