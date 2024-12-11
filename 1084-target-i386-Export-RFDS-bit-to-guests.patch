@@ -1,0 +1,44 @@
+From: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Date: Wed, 13 Mar 2024 07:53:23 -0700
+Subject: [PATCH 3/3] target/i386: Export RFDS bit to guests
+
+commit 41bdd9812863c150284a9339a048ed88c40f4df7 upstream.
+
+Register File Data Sampling (RFDS) is a CPU side-channel vulnerability
+that may expose stale register value. CPUs that set RFDS_NO bit in MSR
+IA32_ARCH_CAPABILITIES indicate that they are not vulnerable to RFDS.
+Similarly, RFDS_CLEAR indicates that CPU is affected by RFDS, and has
+the microcode to help mitigate RFDS.
+
+Make RFDS_CLEAR and RFDS_NO bits available to guests.
+
+Intel-SIG: commit 41bdd9812863 target/i386: Export RFDS bit to guests.
+
+Signed-off-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Reviewed-by: Xiaoyao Li <xiaoyao.li@intel.com>
+Reviewed-by: Zhao Liu <zhao1.liu@intel.com>
+Message-ID: <9a38877857392b5c2deae7e7db1b170d15510314.1710341348.git.pawan.kumar.gupta@linux.intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+[ Quanxian Wang: amend commit log ]
+Signed-off-by: Quanxian Wang <quanxian.wang@intel.com>
+---
+ target/i386/cpu.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index c295491d8a..eda15b0d4c 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1158,8 +1158,8 @@ FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+             NULL, "sbdr-ssdp-no", "fbsdp-no", "psdp-no",
+             NULL, "fb-clear", NULL, NULL,
+             NULL, NULL, NULL, NULL,
+-            "pbrsb-no", NULL, "gds-no", NULL,
+-            NULL, NULL, NULL, NULL,
++            "pbrsb-no", NULL, "gds-no", "rfds-no",
++            "rfds-clear", NULL, NULL, NULL,
+         },
+         .msr = {
+             .index = MSR_IA32_ARCH_CAPABILITIES,
+-- 
+2.25.1

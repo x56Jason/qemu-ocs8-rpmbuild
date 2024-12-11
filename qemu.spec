@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 21%{?dist}
+Release: 22%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -366,6 +366,11 @@ Patch1078: 1078-hw-loongarch-Add-KVM-pch-msi-device-support.patch
 Patch1079: 1079-target-loongarch-clean-code.patch
 Patch1080: 1080-hw-loongarch-boot-Use-warn_report-when-no-kernel-fil.patch
 Patch1081: 1081-hw-loongarch-fix-cpu-hotplug-reset.patch
+
+#Intel SRF platform
+Patch1082: 1082-target-i386-Introduce-Icelake-Server-v7-to-enable-TS.patch
+Patch1083: 1083-target-i386-Add-new-CPU-model-SierraForest.patch
+Patch1084: 1084-target-i386-Export-RFDS-bit-to-guests.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -2110,6 +2115,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Wed Dec 11 2024 Quanxian Wang <quanxian.wang@intel.com> - 8.2.2-22
+- [Type] other
+- [DESC] Backport target/i386: Add new CPU model SierraForest
+
 * Mon Dec 2 2024 Xianglai Li <lixianglai@loongson.cn> - 8.2.2-21
 - Enable netdev user mode
 
