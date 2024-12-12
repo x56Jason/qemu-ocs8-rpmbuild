@@ -1,0 +1,62 @@
+From: Zhenzhong Duan <zhenzhong.duan@intel.com>
+Date: Wed, 20 Mar 2024 17:31:38 +0800
+Subject: [PATCH 1/3] target/i386: Introduce Icelake-Server-v7 to enable TSX
+
+commit c895fa54e3060c5ac6f3888dce96c9b78626072b upstream.
+
+When start L2 guest with both L1/L2 using Icelake-Server-v3 or above,
+QEMU reports below warning:
+
+"warning: host doesn't support requested feature: MSR(10AH).taa-no [bit 8]"
+
+Reason is QEMU Icelake-Server-v3 has TSX feature disabled but enables taa-no
+bit. It's meaningless that TSX isn't supported but still claim TSX is secure.
+So L1 KVM doesn't expose taa-no to L2 if TSX is unsupported, then starting L2
+triggers the warning.
+
+Fix it by introducing a new version Icelake-Server-v7 which has both TSX
+and taa-no features. Then guest can use TSX securely when it see taa-no.
+
+This matches the production Icelake which supports TSX and isn't susceptible
+to TSX Async Abort (TAA) vulnerabilities, a.k.a, taa-no.
+
+Ideally, TSX should have being enabled together with taa-no since v3, but for
+compatibility, we'd better to add v7 to enable it.
+
+Fixes: d965dc35592d ("target/i386: Add ARCH_CAPABILITIES related bits into Icelake-Server CPU model")
+
+Intel-SIG: commit c895fa54e306 target/i386: Introduce Icelake-Server-v7 to enable TSX.
+
+Tested-by: Xiangfei Ma <xiangfeix.ma@intel.com>
+Signed-off-by: Zhenzhong Duan <zhenzhong.duan@intel.com>
+Message-ID: <20240320093138.80267-2-zhenzhong.duan@intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+[ Quanxian Wang: amend commit log ]
+Signed-off-by: Quanxian Wang <quanxian.wang@intel.com>
+---
+ target/i386/cpu.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index eef3d08473..3f4b121468 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -3822,6 +3822,16 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+                     { /* end of list */ }
+                 },
+             },
++            {
++                .version = 7,
++                .note = "TSX, taa-no",
++                .props = (PropValue[]) {
++                    /* Restore TSX features removed by -v2 above */
++                    { "hle", "on" },
++                    { "rtm", "on" },
++                    { /* end of list */ }
++                },
++            },
+             { /* end of list */ }
+         }
+     },
+-- 
+2.25.1
