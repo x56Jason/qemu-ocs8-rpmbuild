@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 22%{?dist}
+Release: 23%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -371,6 +371,13 @@ Patch1081: 1081-hw-loongarch-fix-cpu-hotplug-reset.patch
 Patch1082: 1082-target-i386-Introduce-Icelake-Server-v7-to-enable-TS.patch
 Patch1083: 1083-target-i386-Add-new-CPU-model-SierraForest.patch
 Patch1084: 1084-target-i386-Export-RFDS-bit-to-guests.patch
+
+#Hygon CVM kernel boot verification and secret injection
+Patch1085: 1085-qapi-qom-target-i386-csv-guest-Introduce-secret-head.patch
+Patch1086: 1086-target-i386-kvm-Support-to-get-and-enable-extensions.patch
+Patch1087: 1087-target-i386-csv-Request-to-set-private-memory-of-CSV.patch
+Patch1088: 1088-target-i386-csv-Support-load-kernel-hashes-for-CSV3-.patch
+Patch1089: 1089-target-i386-csv-Support-inject-secret-for-CSV3-guest.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -2115,6 +2122,13 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Dec 27 2024 hanliyang <hanliyang@hygon.cn> - 8.2.2-23
+- [Type] other
+- [DESC] Support 3 functionalities:
+  - Support kernel boot verification for Hygon CSV3 VM
+  - Support inject secret for Hygon CSV3 VM
+  - Support auto load and inject secret for Hygon CSV/CSV2/CSV3 VM
+
 * Wed Dec 11 2024 Quanxian Wang <quanxian.wang@intel.com> - 8.2.2-22
 - [Type] other
 - [DESC] Backport target/i386: Add new CPU model SierraForest
