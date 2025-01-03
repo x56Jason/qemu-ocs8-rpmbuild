@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 23%{?dist}
+Release: 24%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -378,6 +378,9 @@ Patch1086: 1086-target-i386-kvm-Support-to-get-and-enable-extensions.patch
 Patch1087: 1087-target-i386-csv-Request-to-set-private-memory-of-CSV.patch
 Patch1088: 1088-target-i386-csv-Support-load-kernel-hashes-for-CSV3-.patch
 Patch1089: 1089-target-i386-csv-Support-inject-secret-for-CSV3-guest.patch
+
+#Fix network stall at the host side waiting for kick
+Patch1090: 1090-virtio-net-Fix-network-stall-at-the-host-side-waitin.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -2122,6 +2125,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Jan 03 2025 hanliyang <hanliyang@hygon.cn> - 8.2.2-24
+- [Type] bugfix
+- [DESC] Fix network stall at the host side waiting for kick
+
 * Fri Dec 27 2024 hanliyang <hanliyang@hygon.cn> - 8.2.2-23
 - [Type] other
 - [DESC] Support 3 functionalities:
