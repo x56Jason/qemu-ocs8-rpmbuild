@@ -428,10 +428,7 @@ BuildRequires: pkgconfig(gbm)
 %endif
 BuildRequires: perl-Test-Harness
 BuildRequires: libbpf-devel
-
-%ifarch loongarch64
 BuildRequires: libslirp-devel
-%endif
 
 %if "%{toolchain}" == "clang"
 BuildRequires: clang
@@ -1374,10 +1371,8 @@ run_configure \
 %endif
   --enable-virtfs \
   --enable-vnc-jpeg \
-%ifarch loongarch64
   --enable-slirp \
   --enable-slirp-smbd \
-%endif
   --enable-vte \
   --enable-vvfat \
   --enable-zstd \
