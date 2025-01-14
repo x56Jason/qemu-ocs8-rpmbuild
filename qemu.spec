@@ -39,6 +39,7 @@
 %bcond_with nfs
 %bcond_with extra_arch
 
+%define _build_id_links none
 %global _lto_cflags %{nil}
 
 %global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios:%{_datadir}/sgabios"
@@ -136,7 +137,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 24%{?dist}
+Release: 25%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -466,21 +467,11 @@ BuildRequires: flex bison
 
 BuildRequires: glibc-static pcre2-static glib2-static zlib-static
 
-%ifarch aarch64
 Requires: %{name}-system-aarch64 = %{version}-%{release}
-%endif
-%ifarch ppc64le
 Requires: %{name}-system-ppc = %{version}-%{release}
-%endif
-%ifarch x86_64
 Requires: %{name}-system-x86 = %{version}-%{release}
-%endif
-%ifarch riscv
 Requires: %{name}-system-riscv = %{version}-%{release}
-%endif
-%ifarch loongarch64
 Requires: %{name}-system-loongarch64 = %{version}-%{release}
-%endif
 Requires: %{name}-user = %{version}-%{release}
 Requires: %{name}-img = %{version}-%{release}
 Requires: %{name}-tools = %{version}-%{release}
@@ -812,7 +803,6 @@ Requires(postun): systemd-units
 This package provides the user mode emulation of qemu targets built as
 static binaries
 
-%ifarch aarch64
 %package system-aarch64
 Summary: QEMU system emulator for AArch64
 Requires: %{name}-system-aarch64-core = %{version}-%{release}
@@ -828,9 +818,7 @@ Requires: edk2-aarch64
 
 %description system-aarch64-core
 This package provides the QEMU system emulator for AArch64.
-%endif
 
-%ifarch loongarch64
 %package system-loongarch64
 Summary: QEMU system emulator for Loongarch64
 Requires: %{name}-system-loongarch64-core = %{version}-%{release}
@@ -846,7 +834,6 @@ Requires: edk2-loongarch64
 
 %description system-loongarch64-core
 This package provides the QEMU system emulator for Loongarch64.
-%endif
 
 %if %{with extra_arch}
 %package system-alpha
@@ -1084,7 +1071,6 @@ Requires: %{name}-common = %{version}-%{release}
 This package provides the QEMU system emulator for Xtensa boards.
 %endif
 
-%ifarch x86_64
 %package system-x86
 Summary: QEMU system emulator for x86
 Requires: %{name}-system-x86-core = %{version}-%{release}
@@ -1107,9 +1093,7 @@ Requires: edk2-ovmf
 This package provides the QEMU system emulator for x86. When being run in a x86
 machine that supports it, this package also provides the KVM virtualization
 platform.
-%endif
 
-%ifarch ppc64le
 %package system-ppc
 Summary: QEMU system emulator for PPC
 Requires: %{name}-system-ppc-core = %{version}-%{release}
@@ -1127,9 +1111,7 @@ Requires: seavgabios-bin
 
 %description system-ppc-core
 This package provides the QEMU system emulator for PPC and PPC64 systems.
-%endif
 
-%ifarch riscv
 %package system-riscv
 Summary: QEMU system emulator for RISC-V
 Requires: %{name}-system-riscv-core = %{version}-%{release}
@@ -1144,7 +1126,6 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description system-riscv-core
 This package provides the QEMU system emulator for RISC-V systems
-%endif
 
 %prep
 %autosetup -p1
@@ -1483,60 +1464,6 @@ rm -rf %{buildroot}%{qemudocdir}/specs
 # Remove vof roms
 rm -rf %{buildroot}%{_datadir}/%{name}/vof-nvram.bin
 rm -rf %{buildroot}%{_datadir}/%{name}/vof.bin
-
-%ifnarch ppc64le
-rm -rf %{buildroot}%{_bindir}/qemu-system-ppc
-rm -rf %{buildroot}%{_bindir}/qemu-system-ppc64
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-ppc*.stp
-rm -rf %{buildroot}%{_mandir}/man1/qemu-system-ppc.1*
-rm -rf %{buildroot}%{_mandir}/man1/qemu-system-ppc64.1*
-rm -rf %{buildroot}%{_datadir}/%{name}/bamboo.dtb
-rm -rf %{buildroot}%{_datadir}/%{name}/canyonlands.dtb
-rm -rf %{buildroot}%{_datadir}/%{name}/qemu_vga.ndrv
-rm -rf %{buildroot}%{_datadir}/%{name}/skiboot.lid
-rm -rf %{buildroot}%{_datadir}/%{name}/u-boot.e500
-rm -rf %{buildroot}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
-%endif
-
-%ifnarch aarch64
-rm -rf %{buildroot}%{_bindir}/qemu-system-aarch64
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-aarch64*.stp
-rm -rf %{buildroot}%{_mandir}/man1/qemu-system-aarch64.1*
-%endif
-
-%ifnarch loongarch64
-rm -rf %{buildroot}%{_bindir}/qemu-system-loongarch64
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64*.stp
-rm -rf %{buildroot}%{_mandir}/man1/qemu-system-loongarch64.1.gz
-%endif
-
-%ifnarch riscv
-rm -rf %{buildroot}%{_bindir}/qemu-system-riscv32
-rm -rf %{buildroot}%{_bindir}/qemu-system-riscv64
-rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv*.bin
-rm -rf %{buildroot}%{_datadir}/%{name}/opensbi-riscv*.elf
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-riscv*.stp
-rm -rf %{buildroot}%{_mandir}/man1/qemu-system-riscv*.1*
-%endif
-
-%ifnarch x86_64
-rm -rf %{buildroot}%{_bindir}/qemu-system-i386
-rm -rf %{buildroot}%{_bindir}/qemu-system-x86_64
-rm -rf %{buildroot}%{_libdir}/%{name}/accel-tcg-i386.so
-rm -rf %{buildroot}%{_libdir}/%{name}/accel-tcg-x86_64.so
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-i386*.stp
-rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-x86_64*.stp
-rm -rf %{buildroot}%{_mandir}/man1/qemu-system-i386.1*
-rm -rf %{buildroot}%{_mandir}/man1/qemu-system-x86_64.1*
-rm -rf %{buildroot}%{_datadir}/%{name}/kvmvapic.bin
-rm -rf %{buildroot}%{_datadir}/%{name}/linuxboot.bin
-rm -rf %{buildroot}%{_datadir}/%{name}/multiboot.bin
-rm -rf %{buildroot}%{_datadir}/%{name}/multiboot_dma.bin
-rm -rf %{buildroot}%{_datadir}/%{name}/pvh.bin
-rm -rf %{buildroot}%{_datadir}/%{name}/qboot.rom
-rm -rf %{buildroot}%{_bindir}/qemu-kvm
-rm -rf %{buildroot}%{_mandir}/man1/qemu-kvm.1*
-%endif
 
 rm -rf %{buildroot}%{_bindir}/qemu-system-sparc
 rm -rf %{buildroot}%{_bindir}/qemu-system-sparc64
@@ -1933,21 +1860,17 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_bindir}/qemu-*-static
 %{_datadir}/systemtap/tapset/qemu-*-static.stp
 
-%ifarch aarch64
 %files system-aarch64
 %files system-aarch64-core
 %{_bindir}/qemu-system-aarch64
 %{_datadir}/systemtap/tapset/qemu-system-aarch64*.stp
 %{_mandir}/man1/qemu-system-aarch64.1*
-%endif
 
-%ifarch loongarch64
 %files system-loongarch64
 %files system-loongarch64-core
 %{_bindir}/qemu-system-loongarch64
 %{_datadir}/systemtap/tapset/qemu-system-loongarch64*.stp
 %{_mandir}/man1/qemu-system-loongarch64.1.gz
-%endif
 
 %if %{with extra_arch}
 %files system-alpha
@@ -2075,7 +1998,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_mandir}/man1/qemu-system-xtensaeb.1*
 %endif
 
-%ifarch x86_64
 %files system-x86
 %files system-x86-core
 %{_bindir}/qemu-system-i386
@@ -2092,11 +2014,11 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/multiboot_dma.bin
 %{_datadir}/%{name}/pvh.bin
 %{_datadir}/%{name}/qboot.rom
+%ifarch x86_64
 %{_bindir}/qemu-kvm
 %{_mandir}/man1/qemu-kvm.1*
 %endif
 
-%ifarch ppc64le
 %files system-ppc
 %files system-ppc-core
 %{_bindir}/qemu-system-ppc
@@ -2110,21 +2032,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/skiboot.lid
 %{_datadir}/%{name}/u-boot.e500
 %{_datadir}/%{name}/u-boot-sam460-20100605.bin
-%endif
 
-%ifarch riscv
 %files system-riscv
 %files system-riscv-core
 %{_bindir}/qemu-system-riscv32
 %{_bindir}/qemu-system-riscv64
 %{_datadir}/%{name}/opensbi-riscv*.bin
-%{_datadir}/%{name}/opensbi-riscv*.elf
 %{_datadir}/systemtap/tapset/qemu-system-riscv*.stp
 %{_mandir}/man1/qemu-system-riscv*.1*
-%endif
 
 
 %changelog
+* Tue Jan 14 2025 Xinlong Chen <xinlongchen@tencent.com> - 8.2.2-25
+- [Type] other
+- [DESC] enable full-system emulation to other CPU
+
 * Fri Jan 03 2025 hanliyang <hanliyang@hygon.cn> - 8.2.2-24
 - [Type] bugfix
 - [DESC] Fix network stall at the host side waiting for kick
