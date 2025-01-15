@@ -465,7 +465,6 @@ BuildRequires: flex bison
 BuildRequires: glibc-static pcre2-static glib2-static zlib-static
 
 Requires: %{name}-system-aarch64 = %{version}-%{release}
-Requires: %{name}-system-ppc = %{version}-%{release}
 Requires: %{name}-system-x86 = %{version}-%{release}
 Requires: %{name}-system-riscv = %{version}-%{release}
 Requires: %{name}-system-loongarch64 = %{version}-%{release}
@@ -1066,6 +1065,24 @@ Requires: %{name}-common = %{version}-%{release}
 
 %description system-xtensa-core
 This package provides the QEMU system emulator for Xtensa boards.
+
+%package system-ppc
+Summary: QEMU system emulator for PPC
+Requires: %{name}-system-ppc-core = %{version}-%{release}
+%{requires_all_modules}
+
+%description system-ppc
+This package provides the QEMU system emulator for PPC and PPC64 systems.
+
+%package system-ppc-core
+Summary: QEMU system emulator for PPC
+Requires: %{name}-common = %{version}-%{release}
+Requires: openbios
+Requires: SLOF
+Requires: seavgabios-bin
+
+%description system-ppc-core
+This package provides the QEMU system emulator for PPC and PPC64 systems.
 %endif
 
 %package system-x86
@@ -1090,24 +1107,6 @@ Requires: edk2-ovmf
 This package provides the QEMU system emulator for x86. When being run in a x86
 machine that supports it, this package also provides the KVM virtualization
 platform.
-
-%package system-ppc
-Summary: QEMU system emulator for PPC
-Requires: %{name}-system-ppc-core = %{version}-%{release}
-%{requires_all_modules}
-
-%description system-ppc
-This package provides the QEMU system emulator for PPC and PPC64 systems.
-
-%package system-ppc-core
-Summary: QEMU system emulator for PPC
-Requires: %{name}-common = %{version}-%{release}
-Requires: openbios
-Requires: SLOF
-Requires: seavgabios-bin
-
-%description system-ppc-core
-This package provides the QEMU system emulator for PPC and PPC64 systems.
 
 %package system-riscv
 Summary: QEMU system emulator for RISC-V
@@ -1543,6 +1542,17 @@ rm -rf %{buildroot}%{_bindir}/qemu-system-xtensaeb
 rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-xtensa*.stp
 rm -rf %{buildroot}%{_mandir}/man1/qemu-system-xtensa.1*
 rm -rf %{buildroot}%{_mandir}/man1/qemu-system-xtensaeb.1*
+rm -rf %{buildroot}%{_bindir}/qemu-system-ppc
+rm -rf %{buildroot}%{_bindir}/qemu-system-ppc64
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-ppc*.stp
+rm -rf %{buildroot}%{_mandir}/man1/qemu-system-ppc.1*
+rm -rf %{buildroot}%{_mandir}/man1/qemu-system-ppc64.1*
+rm -rf %{buildroot}%{_datadir}/%{name}/bamboo.dtb
+rm -rf %{buildroot}%{_datadir}/%{name}/canyonlands.dtb
+rm -rf %{buildroot}%{_datadir}/%{name}/qemu_vga.ndrv
+rm -rf %{buildroot}%{_datadir}/%{name}/skiboot.lid
+rm -rf %{buildroot}%{_datadir}/%{name}/u-boot.e500
+rm -rf %{buildroot}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
 %endif
 
 %find_lang %{name}
@@ -1991,6 +2001,20 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/systemtap/tapset/qemu-system-xtensa*.stp
 %{_mandir}/man1/qemu-system-xtensa.1*
 %{_mandir}/man1/qemu-system-xtensaeb.1*
+
+%files system-ppc
+%files system-ppc-core
+%{_bindir}/qemu-system-ppc
+%{_bindir}/qemu-system-ppc64
+%{_datadir}/systemtap/tapset/qemu-system-ppc*.stp
+%{_mandir}/man1/qemu-system-ppc.1*
+%{_mandir}/man1/qemu-system-ppc64.1*
+%{_datadir}/%{name}/bamboo.dtb
+%{_datadir}/%{name}/canyonlands.dtb
+%{_datadir}/%{name}/qemu_vga.ndrv
+%{_datadir}/%{name}/skiboot.lid
+%{_datadir}/%{name}/u-boot.e500
+%{_datadir}/%{name}/u-boot-sam460-20100605.bin
 %endif
 
 %files system-x86
@@ -2013,20 +2037,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_bindir}/qemu-kvm
 %{_mandir}/man1/qemu-kvm.1*
 %endif
-
-%files system-ppc
-%files system-ppc-core
-%{_bindir}/qemu-system-ppc
-%{_bindir}/qemu-system-ppc64
-%{_datadir}/systemtap/tapset/qemu-system-ppc*.stp
-%{_mandir}/man1/qemu-system-ppc.1*
-%{_mandir}/man1/qemu-system-ppc64.1*
-%{_datadir}/%{name}/bamboo.dtb
-%{_datadir}/%{name}/canyonlands.dtb
-%{_datadir}/%{name}/qemu_vga.ndrv
-%{_datadir}/%{name}/skiboot.lid
-%{_datadir}/%{name}/u-boot.e500
-%{_datadir}/%{name}/u-boot-sam460-20100605.bin
 
 %files system-riscv
 %files system-riscv-core
