@@ -39,7 +39,6 @@
 %bcond_with nfs
 %bcond_with extra_arch
 
-%define _build_id_links none
 %global _lto_cflags %{nil}
 
 %global firmwaredirs "%{_datadir}/qemu-firmware:%{_datadir}/ipxe/qemu:%{_datadir}/seavgabios:%{_datadir}/seabios:%{_datadir}/sgabios"
@@ -137,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 25%{?dist}
+Release: 26%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -464,10 +463,17 @@ BuildRequires: flex bison
 
 BuildRequires: glibc-static pcre2-static glib2-static zlib-static
 
+%ifarch aarch64
 Requires: %{name}-system-aarch64 = %{version}-%{release}
+%endif
+%ifarch x86_64
 Requires: %{name}-system-x86 = %{version}-%{release}
-Requires: %{name}-system-riscv = %{version}-%{release}
+%endif
+%ifarch loongarch64
 Requires: %{name}-system-loongarch64 = %{version}-%{release}
+%endif
+# enable riscv for all arch
+Requires: %{name}-system-riscv = %{version}-%{release}
 Requires: %{name}-user = %{version}-%{release}
 Requires: %{name}-img = %{version}-%{release}
 Requires: %{name}-tools = %{version}-%{release}
@@ -799,6 +805,7 @@ Requires(postun): systemd-units
 This package provides the user mode emulation of qemu targets built as
 static binaries
 
+%ifarch aarch64
 %package system-aarch64
 Summary: QEMU system emulator for AArch64
 Requires: %{name}-system-aarch64-core = %{version}-%{release}
@@ -814,7 +821,9 @@ Requires: edk2-aarch64
 
 %description system-aarch64-core
 This package provides the QEMU system emulator for AArch64.
+%endif
 
+%ifarch loongarch64
 %package system-loongarch64
 Summary: QEMU system emulator for Loongarch64
 Requires: %{name}-system-loongarch64-core = %{version}-%{release}
@@ -830,6 +839,7 @@ Requires: edk2-loongarch64
 
 %description system-loongarch64-core
 This package provides the QEMU system emulator for Loongarch64.
+%endif
 
 %if %{with extra_arch}
 %package system-alpha
@@ -1085,6 +1095,7 @@ Requires: seavgabios-bin
 This package provides the QEMU system emulator for PPC and PPC64 systems.
 %endif
 
+%ifarch x86_64
 %package system-x86
 Summary: QEMU system emulator for x86
 Requires: %{name}-system-x86-core = %{version}-%{release}
@@ -1107,6 +1118,7 @@ Requires: edk2-ovmf
 This package provides the QEMU system emulator for x86. When being run in a x86
 machine that supports it, this package also provides the KVM virtualization
 platform.
+%endif
 
 %package system-riscv
 Summary: QEMU system emulator for RISC-V
@@ -1555,6 +1567,37 @@ rm -rf %{buildroot}%{_datadir}/%{name}/u-boot.e500
 rm -rf %{buildroot}%{_datadir}/%{name}/u-boot-sam460-20100605.bin
 %endif
 
+%ifnarch aarch64
+rm -rf %{buildroot}%{_bindir}/qemu-system-aarch64
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-aarch64*.stp
+rm -rf %{buildroot}%{_mandir}/man1/qemu-system-aarch64.1*
+%endif
+
+%ifnarch loongarch64
+rm -rf %{buildroot}%{_bindir}/qemu-system-loongarch64
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-loongarch64*.stp
+rm -rf %{buildroot}%{_mandir}/man1/qemu-system-loongarch64.1.gz
+%endif
+
+%ifnarch x86_64
+rm -rf %{buildroot}%{_bindir}/qemu-system-i386
+rm -rf %{buildroot}%{_bindir}/qemu-system-x86_64
+rm -rf %{buildroot}%{_libdir}/%{name}/accel-tcg-i386.so
+rm -rf %{buildroot}%{_libdir}/%{name}/accel-tcg-x86_64.so
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-i386*.stp
+rm -rf %{buildroot}%{_datadir}/systemtap/tapset/qemu-system-x86_64*.stp
+rm -rf %{buildroot}%{_mandir}/man1/qemu-system-i386.1*
+rm -rf %{buildroot}%{_mandir}/man1/qemu-system-x86_64.1*
+rm -rf %{buildroot}%{_datadir}/%{name}/kvmvapic.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/linuxboot.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/multiboot.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/multiboot_dma.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/pvh.bin
+rm -rf %{buildroot}%{_datadir}/%{name}/qboot.rom
+rm -rf %{buildroot}%{_bindir}/qemu-kvm
+rm -rf %{buildroot}%{_mandir}/man1/qemu-kvm.1*
+%endif
+
 %find_lang %{name}
 
 chmod -x %{buildroot}%{_mandir}/man1/*
@@ -1865,17 +1908,21 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_bindir}/qemu-*-static
 %{_datadir}/systemtap/tapset/qemu-*-static.stp
 
+%ifarch aarch64
 %files system-aarch64
 %files system-aarch64-core
 %{_bindir}/qemu-system-aarch64
 %{_datadir}/systemtap/tapset/qemu-system-aarch64*.stp
 %{_mandir}/man1/qemu-system-aarch64.1*
+%endif
 
+%ifarch loongarch64
 %files system-loongarch64
 %files system-loongarch64-core
 %{_bindir}/qemu-system-loongarch64
 %{_datadir}/systemtap/tapset/qemu-system-loongarch64*.stp
 %{_mandir}/man1/qemu-system-loongarch64.1.gz
+%endif
 
 %if %{with extra_arch}
 %files system-alpha
@@ -2017,6 +2064,7 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/u-boot-sam460-20100605.bin
 %endif
 
+%ifarch x86_64
 %files system-x86
 %files system-x86-core
 %{_bindir}/qemu-system-i386
@@ -2033,7 +2081,6 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 %{_datadir}/%{name}/multiboot_dma.bin
 %{_datadir}/%{name}/pvh.bin
 %{_datadir}/%{name}/qboot.rom
-%ifarch x86_64
 %{_bindir}/qemu-kvm
 %{_mandir}/man1/qemu-kvm.1*
 %endif
@@ -2048,6 +2095,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Thu Jan 16 2025 Xinlong Chen <xinlongchen@tencent.com> - 8.2.2-26
+- [Type] other
+- [DESC] just enable riscv, because edk2 cross dependency contains epol pkg
+
 * Tue Jan 14 2025 Xinlong Chen <xinlongchen@tencent.com> - 8.2.2-25
 - [Type] other
 - [DESC] enable full-system emulation to other CPU
