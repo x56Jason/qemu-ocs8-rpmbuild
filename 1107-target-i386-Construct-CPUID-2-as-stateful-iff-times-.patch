@@ -1,0 +1,42 @@
+From 6e3cdae9e911a4f63c4ddcfbe1239cf62e7f0879 Mon Sep 17 00:00:00 2001
+From: Xiaoyao Li <xiaoyao.li@intel.com>
+Date: Wed, 14 Aug 2024 03:54:27 -0400
+Subject: [PATCH 1107/1109] target/i386: Construct CPUID 2 as stateful iff
+ times > 1
+
+commit 5ab639141b6d916a6f4041d4ec46f2f1a1e4a365 upstream.
+
+When times == 1, the CPUID leaf 2 is not stateful.
+
+Intel-SIG: commit 5ab639141b6d target/i386: Construct CPUID 2 as stateful iff times > 1
+
+Signed-off-by: Xiaoyao Li <xiaoyao.li@intel.com>
+Link: https://lore.kernel.org/r/20240814075431.339209-6-xiaoyao.li@intel.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/kvm/kvm.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/kvm/kvm.c b/target/i386/kvm/kvm.c
+index 5057dfbd755f..a867512822ab 100644
+--- a/target/i386/kvm/kvm.c
++++ b/target/i386/kvm/kvm.c
+@@ -1896,10 +1896,12 @@ int kvm_arch_init_vcpu(CPUState *cs)
+             int times;
+ 
+             c->function = i;
+-            c->flags = KVM_CPUID_FLAG_STATEFUL_FUNC |
+-                       KVM_CPUID_FLAG_STATE_READ_NEXT;
+             cpu_x86_cpuid(env, i, 0, &c->eax, &c->ebx, &c->ecx, &c->edx);
+             times = c->eax & 0xff;
++            if (times > 1) {
++                c->flags = KVM_CPUID_FLAG_STATEFUL_FUNC |
++                           KVM_CPUID_FLAG_STATE_READ_NEXT;
++            }
+ 
+             for (j = 1; j < times; ++j) {
+                 if (cpuid_i == KVM_MAX_CPUID_ENTRIES) {
+-- 
+2.33.0
+

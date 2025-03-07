@@ -1,0 +1,40 @@
+From 24bac01a998fe619b1833253f31ca7bd2d20770c Mon Sep 17 00:00:00 2001
+From: "Xin Li (Intel)" <xin@zytor.com>
+Date: Wed, 7 Aug 2024 01:18:10 -0700
+Subject: [PATCH 1100/1109] target/i386: Delete duplicated macro definition
+ CR4_FRED_MASK
+
+commit a23bc6539890d8b27458cf56bc4ed0e0d3c2de3e upstream.
+
+Macro CR4_FRED_MASK is defined twice, delete one.
+
+Intel-SIG: commit a23bc6539890 target/i386: Delete duplicated macro definition CR4_FRED_MASK
+
+Signed-off-by: Xin Li (Intel) <xin@zytor.com>
+Link: https://lore.kernel.org/r/20240807081813.735158-2-xin@zytor.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.h | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index fd411c1ce708..693c2a842660 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -269,12 +269,6 @@ typedef enum X86Seg {
+ #define CR4_FRED_MASK   0
+ #endif
+ 
+-#ifdef TARGET_X86_64
+-#define CR4_FRED_MASK   (1ULL << 32)
+-#else
+-#define CR4_FRED_MASK   0
+-#endif
+-
+ #define CR4_RESERVED_MASK \
+ (~(target_ulong)(CR4_VME_MASK | CR4_PVI_MASK | CR4_TSD_MASK \
+                 | CR4_DE_MASK | CR4_PSE_MASK | CR4_PAE_MASK \
+-- 
+2.33.0
+

@@ -1,0 +1,189 @@
+From ac8f76222a8c5d1cade1dec23f3ee80b77d0a869 Mon Sep 17 00:00:00 2001
+From: Xin Li <xin3.li@intel.com>
+Date: Wed, 8 Nov 2023 23:20:12 -0800
+Subject: [PATCH 1099/1109] target/i386: Add get/set/migrate support for FRED
+ MSRs
+
+commit 4ebd98eb3ade5957a842da1420bda012eeeaab9c upstream.
+
+FRED CPU states are managed in 9 new FRED MSRs, in addtion to a few
+existing CPU registers and MSRs, e.g., CR4.FRED and MSR_IA32_PL0_SSP.
+
+Save/restore/migrate FRED MSRs if FRED is exposed to the guest.
+
+Intel-SIG: commit 4ebd98eb3ade target/i386: Add get/set/migrate support for FRED MSRs
+
+Tested-by: Shan Kang <shan.kang@intel.com>
+Signed-off-by: Xin Li <xin3.li@intel.com>
+Message-ID: <20231109072012.8078-7-xin3.li@intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.h     | 22 +++++++++++++++++++
+ target/i386/kvm/kvm.c | 49 +++++++++++++++++++++++++++++++++++++++++++
+ target/i386/machine.c | 28 +++++++++++++++++++++++++
+ 3 files changed, 99 insertions(+)
+
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index ab163428750d..fd411c1ce708 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -538,6 +538,17 @@ typedef enum X86Seg {
+ #define MSR_IA32_XFD                    0x000001c4
+ #define MSR_IA32_XFD_ERR                0x000001c5
+ 
++/* FRED MSRs */
++#define MSR_IA32_FRED_RSP0              0x000001cc       /* Stack level 0 regular stack pointer */
++#define MSR_IA32_FRED_RSP1              0x000001cd       /* Stack level 1 regular stack pointer */
++#define MSR_IA32_FRED_RSP2              0x000001ce       /* Stack level 2 regular stack pointer */
++#define MSR_IA32_FRED_RSP3              0x000001cf       /* Stack level 3 regular stack pointer */
++#define MSR_IA32_FRED_STKLVLS           0x000001d0       /* FRED exception stack levels */
++#define MSR_IA32_FRED_SSP1              0x000001d1       /* Stack level 1 shadow stack pointer in ring 0 */
++#define MSR_IA32_FRED_SSP2              0x000001d2       /* Stack level 2 shadow stack pointer in ring 0 */
++#define MSR_IA32_FRED_SSP3              0x000001d3       /* Stack level 3 shadow stack pointer in ring 0 */
++#define MSR_IA32_FRED_CONFIG            0x000001d4       /* FRED Entrypoint and interrupt stack level */
++
+ #define MSR_IA32_BNDCFGS                0x00000d90
+ #define MSR_IA32_XSS                    0x00000da0
+ #define MSR_IA32_UMWAIT_CONTROL         0xe1
+@@ -1697,6 +1708,17 @@ typedef struct CPUArchState {
+     target_ulong cstar;
+     target_ulong fmask;
+     target_ulong kernelgsbase;
++
++    /* FRED MSRs */
++    uint64_t fred_rsp0;
++    uint64_t fred_rsp1;
++    uint64_t fred_rsp2;
++    uint64_t fred_rsp3;
++    uint64_t fred_stklvls;
++    uint64_t fred_ssp1;
++    uint64_t fred_ssp2;
++    uint64_t fred_ssp3;
++    uint64_t fred_config;
+ #endif
+ 
+     uint64_t tsc_adjust;
+diff --git a/target/i386/kvm/kvm.c b/target/i386/kvm/kvm.c
+index 12e920bbb4ee..5f3497e122ea 100644
+--- a/target/i386/kvm/kvm.c
++++ b/target/i386/kvm/kvm.c
+@@ -3391,6 +3391,17 @@ static int kvm_put_msrs(X86CPU *cpu, int level)
+         kvm_msr_entry_add(cpu, MSR_KERNELGSBASE, env->kernelgsbase);
+         kvm_msr_entry_add(cpu, MSR_FMASK, env->fmask);
+         kvm_msr_entry_add(cpu, MSR_LSTAR, env->lstar);
++        if (env->features[FEAT_7_1_EAX] & CPUID_7_1_EAX_FRED) {
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP0, env->fred_rsp0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP1, env->fred_rsp1);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP2, env->fred_rsp2);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP3, env->fred_rsp3);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_STKLVLS, env->fred_stklvls);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_SSP1, env->fred_ssp1);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_SSP2, env->fred_ssp2);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_SSP3, env->fred_ssp3);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_CONFIG, env->fred_config);
++        }
+     }
+ #endif
+ 
+@@ -3867,6 +3878,17 @@ static int kvm_get_msrs(X86CPU *cpu)
+         kvm_msr_entry_add(cpu, MSR_KERNELGSBASE, 0);
+         kvm_msr_entry_add(cpu, MSR_FMASK, 0);
+         kvm_msr_entry_add(cpu, MSR_LSTAR, 0);
++        if (env->features[FEAT_7_1_EAX] & CPUID_7_1_EAX_FRED) {
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP0, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP1, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP2, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_RSP3, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_STKLVLS, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_SSP1, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_SSP2, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_SSP3, 0);
++            kvm_msr_entry_add(cpu, MSR_IA32_FRED_CONFIG, 0);
++        }
+     }
+ #endif
+     kvm_msr_entry_add(cpu, MSR_KVM_SYSTEM_TIME, 0);
+@@ -4092,6 +4114,33 @@ static int kvm_get_msrs(X86CPU *cpu)
+         case MSR_LSTAR:
+             env->lstar = msrs[i].data;
+             break;
++        case MSR_IA32_FRED_RSP0:
++            env->fred_rsp0 = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_RSP1:
++            env->fred_rsp1 = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_RSP2:
++            env->fred_rsp2 = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_RSP3:
++            env->fred_rsp3 = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_STKLVLS:
++            env->fred_stklvls = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_SSP1:
++            env->fred_ssp1 = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_SSP2:
++            env->fred_ssp2 = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_SSP3:
++            env->fred_ssp3 = msrs[i].data;
++            break;
++        case MSR_IA32_FRED_CONFIG:
++            env->fred_config = msrs[i].data;
++            break;
+ #endif
+         case MSR_IA32_TSC:
+             env->tsc = msrs[i].data;
+diff --git a/target/i386/machine.c b/target/i386/machine.c
+index 9a1cb8f3b81f..7cbfbc0efb05 100644
+--- a/target/i386/machine.c
++++ b/target/i386/machine.c
+@@ -1544,6 +1544,33 @@ static const VMStateDescription vmstate_msr_xfd = {
+ };
+ 
+ #ifdef TARGET_X86_64
++static bool intel_fred_msrs_needed(void *opaque)
++{
++    X86CPU *cpu = opaque;
++    CPUX86State *env = &cpu->env;
++
++    return !!(env->features[FEAT_7_1_EAX] & CPUID_7_1_EAX_FRED);
++}
++
++static const VMStateDescription vmstate_msr_fred = {
++    .name = "cpu/fred",
++    .version_id = 1,
++    .minimum_version_id = 1,
++    .needed = intel_fred_msrs_needed,
++    .fields = (VMStateField[]) {
++        VMSTATE_UINT64(env.fred_rsp0, X86CPU),
++        VMSTATE_UINT64(env.fred_rsp1, X86CPU),
++        VMSTATE_UINT64(env.fred_rsp2, X86CPU),
++        VMSTATE_UINT64(env.fred_rsp3, X86CPU),
++        VMSTATE_UINT64(env.fred_stklvls, X86CPU),
++        VMSTATE_UINT64(env.fred_ssp1, X86CPU),
++        VMSTATE_UINT64(env.fred_ssp2, X86CPU),
++        VMSTATE_UINT64(env.fred_ssp3, X86CPU),
++        VMSTATE_UINT64(env.fred_config, X86CPU),
++        VMSTATE_END_OF_LIST()
++            }
++        };
++
+ static bool amx_xtile_needed(void *opaque)
+ {
+     X86CPU *cpu = opaque;
+@@ -1768,6 +1795,7 @@ const VMStateDescription vmstate_x86_cpu = {
+         &vmstate_pdptrs,
+         &vmstate_msr_xfd,
+ #ifdef TARGET_X86_64
++        &vmstate_msr_fred,
+         &vmstate_amx_xtile,
+ #endif
+         &vmstate_arch_lbr,
+-- 
+2.33.0
+

@@ -1,0 +1,39 @@
+From d756c541fa7f19463347c2d7642c44535342b229 Mon Sep 17 00:00:00 2001
+From: Paolo Bonzini <pbonzini@redhat.com>
+Date: Wed, 8 May 2024 11:10:54 +0200
+Subject: [PATCH 1094/1109] target/i386: fix feature dependency for WAITPKG
+
+commit fe01af5d47d4cf7fdf90c54d43f784e5068c8d72 upstream.
+
+The VMX feature bit depends on general availability of WAITPKG,
+not the other way round.
+
+Intel-SIG: commit fe01af5d47d4 target/i386: fix feature dependency for WAITPKG
+
+Fixes: 33cc88261c3 ("target/i386: add support for VMX_SECONDARY_EXEC_ENABLE_USER_WAIT_PAUSE", 2023-08-28)
+Cc: qemu-stable@nongnu.org
+Reviewed-by: Zhao Liu <zhao1.liu@intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 4afccacebc6d..62a120fe7eef 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1550,8 +1550,8 @@ static FeatureDep feature_dependencies[] = {
+         .to = { FEAT_SVM,                   ~0ull },
+     },
+     {
+-        .from = { FEAT_VMX_SECONDARY_CTLS,  VMX_SECONDARY_EXEC_ENABLE_USER_WAIT_PAUSE },
+-        .to = { FEAT_7_0_ECX,               CPUID_7_0_ECX_WAITPKG },
++        .from = { FEAT_7_0_ECX,             CPUID_7_0_ECX_WAITPKG },
++        .to = { FEAT_VMX_SECONDARY_CTLS,    VMX_SECONDARY_EXEC_ENABLE_USER_WAIT_PAUSE },
+     },
+ };
+ 
+-- 
+2.33.0
+

@@ -1,0 +1,64 @@
+From 3ba03c1f4208b717761091ad2f437b5d0cab9cf9 Mon Sep 17 00:00:00 2001
+From: Chao Gao <chao.gao@intel.com>
+Date: Thu, 19 Sep 2024 13:10:11 +0800
+Subject: [PATCH 1093/1109] target/i386: Add more features enumerated by
+ CPUID.7.2.EDX
+
+commit 10eaf9c0fb7060f45807becbb2742a9de9bc3632 upstream.
+
+Following 5 bits in CPUID.7.2.EDX are supported by KVM. Add their
+supports in QEMU. Each of them indicates certain bits of IA32_SPEC_CTRL
+are supported. Those bits can control CPU speculation behavior which can
+be used to defend against side-channel attacks.
+
+bit0: intel-psfd
+  if 1, indicates bit 7 of the IA32_SPEC_CTRL MSR is supported. Bit 7 of
+  this MSR disables Fast Store Forwarding Predictor without disabling
+  Speculative Store Bypass
+
+bit1: ipred-ctrl
+  If 1, indicates bits 3 and 4 of the IA32_SPEC_CTRL MSR are supported.
+  Bit 3 of this MSR enables IPRED_DIS control for CPL3. Bit 4 of this
+  MSR enables IPRED_DIS control for CPL0/1/2
+
+bit2: rrsba-ctrl
+  If 1, indicates bits 5 and 6 of the IA32_SPEC_CTRL MSR are supported.
+  Bit 5 of this MSR disables RRSBA behavior for CPL3. Bit 6 of this MSR
+  disables RRSBA behavior for CPL0/1/2
+
+bit3: ddpd-u
+  If 1, indicates bit 8 of the IA32_SPEC_CTRL MSR is supported. Bit 8 of
+  this MSR disables Data Dependent Prefetcher.
+
+bit4: bhi-ctrl
+  if 1, indicates bit 10 of the IA32_SPEC_CTRL MSR is supported. Bit 10
+  of this MSR enables BHI_DIS_S behavior.
+
+Intel-SIG: commit 10eaf9c0fb70 target/i386: Add more features enumerated by CPUID.7.2.EDX
+
+Signed-off-by: Chao Gao <chao.gao@intel.com>
+Link: https://lore.kernel.org/r/20240919051011.118309-1-chao.gao@intel.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 8649f9ebf586..4afccacebc6d 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1000,8 +1000,8 @@ FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+     [FEAT_7_2_EDX] = {
+         .type = CPUID_FEATURE_WORD,
+         .feat_names = {
+-            NULL, NULL, NULL, NULL,
+-            NULL, "mcdt-no", NULL, NULL,
++            "intel-psfd", "ipred-ctrl", "rrsba-ctrl", "ddpd-u",
++            "bhi-ctrl", "mcdt-no", NULL, NULL,
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+-- 
+2.33.0
+

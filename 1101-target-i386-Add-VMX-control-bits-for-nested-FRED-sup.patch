@@ -1,0 +1,49 @@
+From f797759e9d5b06e17a096533a77a37e96fe2a024 Mon Sep 17 00:00:00 2001
+From: "Xin Li (Intel)" <xin@zytor.com>
+Date: Wed, 7 Aug 2024 01:18:11 -0700
+Subject: [PATCH 1101/1109] target/i386: Add VMX control bits for nested FRED
+ support
+
+commit 7c6ec5bc5fea92a4ddea3f0189e3a7e7588e1d19 upstream.
+
+Add definitions of
+  1) VM-exit activate secondary controls bit
+  2) VM-entry load FRED bit
+which are required to enable nested FRED.
+
+Intel-SIG: commit 7c6ec5bc5fea target/i386: Add VMX control bits for nested FRED support
+
+Reviewed-by: Zhao Liu <zhao1.liu@intel.com>
+Signed-off-by: Xin Li (Intel) <xin@zytor.com>
+Link: https://lore.kernel.org/r/20240807081813.735158-3-xin@zytor.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 1b9f9dda6d27..58160726d2d9 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1271,7 +1271,7 @@ FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+             "vmx-exit-save-efer", "vmx-exit-load-efer",
+                 "vmx-exit-save-preemption-timer", "vmx-exit-clear-bndcfgs",
+             NULL, "vmx-exit-clear-rtit-ctl", NULL, NULL,
+-            NULL, "vmx-exit-load-pkrs", NULL, NULL,
++            NULL, "vmx-exit-load-pkrs", NULL, "vmx-exit-secondary-ctls",
+         },
+         .msr = {
+             .index = MSR_IA32_VMX_TRUE_EXIT_CTLS,
+@@ -1286,7 +1286,7 @@ FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+             NULL, "vmx-entry-ia32e-mode", NULL, NULL,
+             NULL, "vmx-entry-load-perf-global-ctrl", "vmx-entry-load-pat", "vmx-entry-load-efer",
+             "vmx-entry-load-bndcfgs", NULL, "vmx-entry-load-rtit-ctl", NULL,
+-            NULL, NULL, "vmx-entry-load-pkrs", NULL,
++            NULL, NULL, "vmx-entry-load-pkrs", "vmx-entry-load-fred",
+             NULL, NULL, NULL, NULL,
+             NULL, NULL, NULL, NULL,
+         },
+-- 
+2.33.0
+

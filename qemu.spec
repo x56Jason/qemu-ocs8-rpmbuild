@@ -136,7 +136,7 @@
 Summary: QEMU is a FAST! processor emulator
 Name: qemu
 Version: 8.2.2
-Release: 26%{?dist}
+Release: 27%{?dist}
 License: GPLv2 and BSD and MIT and CC-BY
 URL: http://www.qemu.org/
 Source0: https://download.qemu.org/%{name}-%{version}.tar.xz
@@ -381,6 +381,27 @@ Patch1089: 1089-target-i386-csv-Support-inject-secret-for-CSV3-guest.patch
 
 #Fix network stall at the host side waiting for kick
 Patch1090: 1090-virtio-net-Fix-network-stall-at-the-host-side-waitin.patch
+
+# Dependency for Intel CWF platform and others
+Patch1091: 1091-target-i386-add-guest-phys-bits-cpu-property.patch
+Patch1092: 1092-kvm-add-support-for-guest-physical-bits.patch
+Patch1093: 1093-target-i386-Add-more-features-enumerated-by-CPUID.7..patch
+Patch1094: 1094-target-i386-fix-feature-dependency-for-WAITPKG.patch
+Patch1095: 1095-target-i386-add-support-for-FRED-in-CPUID-enumeratio.patch
+Patch1096: 1096-target-i386-mark-CR4.FRED-not-reserved.patch
+Patch1097: 1097-vmxcap-add-support-for-VMX-FRED-controls.patch
+Patch1098: 1098-target-i386-enumerate-VMX-nested-exception-support.patch
+Patch1099: 1099-target-i386-Add-get-set-migrate-support-for-FRED-MSR.patch
+Patch1100: 1100-target-i386-Delete-duplicated-macro-definition-CR4_F.patch
+Patch1101: 1101-target-i386-Add-VMX-control-bits-for-nested-FRED-sup.patch
+Patch1102: 1102-target-i386-Raise-the-highest-index-value-used-for-a.patch
+Patch1103: 1103-target-i386-pass-X86CPU-to-x86_cpu_get_supported_fea.patch
+Patch1104: 1104-i386-cpuid-Remove-subleaf-constraint-on-CPUID-leaf-1.patch
+Patch1105: 1105-target-i386-Don-t-construct-a-all-zero-entry-for-CPU.patch
+Patch1106: 1106-target-i386-Enable-fdp-excptn-only-and-zero-fcs-fds.patch
+Patch1107: 1107-target-i386-Construct-CPUID-2-as-stateful-iff-times-.patch
+Patch1108: 1108-target-i386-Make-invtsc-migratable-when-user-sets-ts.patch
+Patch1109: 1109-target-i386-cpu-Fix-notes-for-CPU-models.patch
 
 BuildRequires: meson >= %{meson_version}
 BuildRequires: zlib-devel
@@ -2095,6 +2116,10 @@ useradd -r -u 107 -g qemu -G kvm -d / -s /sbin/nologin \
 
 
 %changelog
+* Fri Mar 7 2025 Jason Zeng <jason.zeng@intel.com> - 8.2.2-27
+- [Type] other
+- [DESC] dependency for Intel ClearwaterForest platform 
+
 * Thu Jan 16 2025 Xinlong Chen <xinlongchen@tencent.com> - 8.2.2-26
 - [Type] other
 - [DESC] just enable riscv, because edk2 cross dependency contains epol pkg

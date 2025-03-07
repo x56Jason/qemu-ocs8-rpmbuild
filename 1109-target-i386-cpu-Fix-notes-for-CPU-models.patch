@@ -1,0 +1,45 @@
+From 517d845c212f0d5a8dab05df58131ae7f2bfeadd Mon Sep 17 00:00:00 2001
+From: Han Han <hhan@redhat.com>
+Date: Thu, 19 Dec 2024 16:51:38 +0800
+Subject: [PATCH 1109/1109] target/i386/cpu: Fix notes for CPU models
+
+commit 93dcc9390e5ad0696ae7e9b7b3a5b08c2d1b6de6 upstream.
+
+
+
+Intel-SIG: commit 93dcc9390e5a target/i386/cpu: Fix notes for CPU models
+
+Fixes: 644e3c5d812 ("missing vmx features for Skylake-Server and Cascadelake-Server")
+Signed-off-by: Han Han <hhan@redhat.com>
+Reviewed-by: Chenyi Qiang <chenyi.qiang@intel.com>
+Reviewed-by: Michael Tokarev <mjt@tls.msk.ru>
+Signed-off-by: Michael Tokarev <mjt@tls.msk.ru>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 2f017a87ded8..88a584b736af 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -3473,6 +3473,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+             },
+             {
+                 .version = 4,
++                .note = "IBRS, EPT switching, no TSX",
+                 .props = (PropValue[]) {
+                     { "vmx-eptp-switching", "on" },
+                     { /* end of list */ }
+@@ -3607,7 +3608,7 @@ static const X86CPUDefinition builtin_x86_defs[] = {
+               },
+             },
+             { .version = 4,
+-              .note = "ARCH_CAPABILITIES, no TSX",
++              .note = "ARCH_CAPABILITIES, EPT switching, no TSX",
+               .props = (PropValue[]) {
+                   { "vmx-eptp-switching", "on" },
+                   { /* end of list */ }
+-- 
+2.33.0
+

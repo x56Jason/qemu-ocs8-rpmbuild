@@ -1,0 +1,66 @@
+From 4b9f240e63d32c48f178e586f7457cccb4e99bbf Mon Sep 17 00:00:00 2001
+From: Lei Wang <lei4.wang@intel.com>
+Date: Wed, 7 Aug 2024 01:18:12 -0700
+Subject: [PATCH 1102/1109] target/i386: Raise the highest index value used for
+ any VMCS encoding
+
+commit ab891454ebe82f7e359be721007652556f9f8356 upstream.
+
+Because the index value of the VMCS field encoding of FRED injected-event
+data (one of the newly added VMCS fields for FRED transitions), 0x52, is
+larger than any existing index value, raise the highest index value used
+for any VMCS encoding to 0x52.
+
+Because the index value of the VMCS field encoding of Secondary VM-exit
+controls, 0x44, is larger than any existing index value, raise the highest
+index value used for any VMCS encoding to 0x44.
+
+Intel-SIG: commit ab891454ebe8 target/i386: Raise the highest index value used for any VMCS encoding
+
+Co-developed-by: Xin Li <xin3.li@intel.com>
+Signed-off-by: Xin Li <xin3.li@intel.com>
+Signed-off-by: Lei Wang <lei4.wang@intel.com>
+Signed-off-by: Xin Li (Intel) <xin@zytor.com>
+Link: https://lore.kernel.org/r/20240807081813.735158-4-xin@zytor.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.h     | 1 +
+ target/i386/kvm/kvm.c | 9 ++++++++-
+ 2 files changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index 693c2a842660..5c8507c8674d 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -1165,6 +1165,7 @@ uint64_t x86_cpu_get_supported_feature_word(FeatureWord w,
+ #define VMX_VM_EXIT_PT_CONCEAL_PIP                  0x01000000
+ #define VMX_VM_EXIT_CLEAR_IA32_RTIT_CTL             0x02000000
+ #define VMX_VM_EXIT_LOAD_IA32_PKRS                  0x20000000
++#define VMX_VM_EXIT_ACTIVATE_SECONDARY_CONTROLS     0x80000000
+ 
+ #define VMX_VM_ENTRY_LOAD_DEBUG_CONTROLS            0x00000004
+ #define VMX_VM_ENTRY_IA32E_MODE                     0x00000200
+diff --git a/target/i386/kvm/kvm.c b/target/i386/kvm/kvm.c
+index 5f3497e122ea..ce96ed9158e1 100644
+--- a/target/i386/kvm/kvm.c
++++ b/target/i386/kvm/kvm.c
+@@ -3254,7 +3254,14 @@ static void kvm_msr_entry_add_vmx(X86CPU *cpu, FeatureWordArray f)
+     kvm_msr_entry_add(cpu, MSR_IA32_VMX_CR4_FIXED0,
+                       CR4_VMXE_MASK);
+ 
+-    if (f[FEAT_VMX_SECONDARY_CTLS] & VMX_SECONDARY_EXEC_TSC_SCALING) {
++    if (f[FEAT_7_1_EAX] & CPUID_7_1_EAX_FRED) {
++        /* FRED injected-event data (0x2052).  */
++        kvm_msr_entry_add(cpu, MSR_IA32_VMX_VMCS_ENUM, 0x52);
++    } else if (f[FEAT_VMX_EXIT_CTLS] &
++               VMX_VM_EXIT_ACTIVATE_SECONDARY_CONTROLS) {
++        /* Secondary VM-exit controls (0x2044).  */
++        kvm_msr_entry_add(cpu, MSR_IA32_VMX_VMCS_ENUM, 0x44);
++    } else if (f[FEAT_VMX_SECONDARY_CTLS] & VMX_SECONDARY_EXEC_TSC_SCALING) {
+         /* TSC multiplier (0x2032).  */
+         kvm_msr_entry_add(cpu, MSR_IA32_VMX_VMCS_ENUM, 0x32);
+     } else {
+-- 
+2.33.0
+

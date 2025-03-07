@@ -1,0 +1,39 @@
+From 92e3d35f96dcf28cfd050364ed9f3a6df1666b53 Mon Sep 17 00:00:00 2001
+From: Xiaoyao Li <xiaoyao.li@intel.com>
+Date: Wed, 24 Jan 2024 21:40:15 -0500
+Subject: [PATCH 1104/1109] i386/cpuid: Remove subleaf constraint on CPUID leaf
+ 1F
+
+commit a3b5376521a0de898440e8d0942b54e628f0949f upstream.
+
+No such constraint that subleaf index needs to be less than 64.
+
+Intel-SIG: commit a3b5376521a0 i386/cpuid: Remove subleaf constraint on CPUID leaf 1F
+
+Signed-off-by: Xiaoyao Li <xiaoyao.li@intel.com>
+Reviewed-by:Yang Weijiang <weijiang.yang@intel.com>
+Message-ID: <20240125024016.2521244-3-xiaoyao.li@intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/kvm/kvm.c | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/target/i386/kvm/kvm.c b/target/i386/kvm/kvm.c
+index ce96ed9158e1..850104f6b571 100644
+--- a/target/i386/kvm/kvm.c
++++ b/target/i386/kvm/kvm.c
+@@ -1928,10 +1928,6 @@ int kvm_arch_init_vcpu(CPUState *cs)
+                     break;
+                 }
+ 
+-                if (i == 0x1f && j == 64) {
+-                    break;
+-                }
+-
+                 c->function = i;
+                 c->flags = KVM_CPUID_FLAG_SIGNIFCANT_INDEX;
+                 c->index = j;
+-- 
+2.33.0
+

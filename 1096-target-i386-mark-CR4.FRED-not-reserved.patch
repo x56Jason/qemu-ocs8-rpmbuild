@@ -1,0 +1,67 @@
+From 0a27650cf07bab5b085674be7dd4ab3f1b691948 Mon Sep 17 00:00:00 2001
+From: Xin Li <xin3.li@intel.com>
+Date: Wed, 8 Nov 2023 23:20:08 -0800
+Subject: [PATCH 1096/1109] target/i386: mark CR4.FRED not reserved
+
+commit f88ddc40c6d8b591a357108feec52cea13796d2d upstream.
+
+The CR4.FRED bit, i.e., CR4[32], is no longer a reserved bit when FRED
+is exposed to guests, otherwise it is still a reserved bit.
+
+Intel-SIG: commit f88ddc40c6d8 target/i386: mark CR4.FRED not reserved
+
+Tested-by: Shan Kang <shan.kang@intel.com>
+Signed-off-by: Xin Li <xin3.li@intel.com>
+Reviewed-by: Zhao Liu <zhao1.liu@intel.com>
+Message-ID: <20231109072012.8078-3-xin3.li@intel.com>
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.h | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index 13274e14045e..1c13f902462a 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -263,6 +263,18 @@ typedef enum X86Seg {
+ #define CR4_PKS_MASK   (1U << 24)
+ #define CR4_LAM_SUP_MASK (1U << 28)
+ 
++#ifdef TARGET_X86_64
++#define CR4_FRED_MASK   (1ULL << 32)
++#else
++#define CR4_FRED_MASK   0
++#endif
++
++#ifdef TARGET_X86_64
++#define CR4_FRED_MASK   (1ULL << 32)
++#else
++#define CR4_FRED_MASK   0
++#endif
++
+ #define CR4_RESERVED_MASK \
+ (~(target_ulong)(CR4_VME_MASK | CR4_PVI_MASK | CR4_TSD_MASK \
+                 | CR4_DE_MASK | CR4_PSE_MASK | CR4_PAE_MASK \
+@@ -271,7 +283,7 @@ typedef enum X86Seg {
+                 | CR4_LA57_MASK \
+                 | CR4_FSGSBASE_MASK | CR4_PCIDE_MASK | CR4_OSXSAVE_MASK \
+                 | CR4_SMEP_MASK | CR4_SMAP_MASK | CR4_PKE_MASK | CR4_PKS_MASK \
+-                | CR4_LAM_SUP_MASK))
++                | CR4_LAM_SUP_MASK | CR4_FRED_MASK))
+ 
+ #define DR6_BD          (1 << 13)
+ #define DR6_BS          (1 << 14)
+@@ -2551,6 +2563,9 @@ static inline uint64_t cr4_reserved_bits(CPUX86State *env)
+     if (!(env->features[FEAT_7_1_EAX] & CPUID_7_1_EAX_LAM)) {
+         reserved_bits |= CR4_LAM_SUP_MASK;
+     }
++    if (!(env->features[FEAT_7_1_EAX] & CPUID_7_1_EAX_FRED)) {
++        reserved_bits |= CR4_FRED_MASK;
++    }
+     return reserved_bits;
+ }
+ 
+-- 
+2.33.0
+

@@ -1,0 +1,66 @@
+From 199cc6ea6d4159f3502b27c3f0dbe2c538d3bba3 Mon Sep 17 00:00:00 2001
+From: Xiaoyao Li <xiaoyao.li@intel.com>
+Date: Wed, 14 Aug 2024 03:54:31 -0400
+Subject: [PATCH 1108/1109] target/i386: Make invtsc migratable when user sets
+ tsc-khz explicitly
+
+commit 87c88db3143e91076d167a62dd7febf49afca8a2 upstream.
+
+When user sets tsc-frequency explicitly, the invtsc feature is actually
+migratable because the tsc-frequency is supposed to be fixed during the
+migration.
+
+See commit d99569d9d856 ("kvm: Allow invtsc migration if tsc-khz
+is set explicitly") for referrence.
+
+Intel-SIG: commit 87c88db3143e target/i386: Make invtsc migratable when user sets tsc-khz explicitly
+
+Signed-off-by: Xiaoyao Li <xiaoyao.li@intel.com>
+Link: https://lore.kernel.org/r/20240814075431.339209-10-xiaoyao.li@intel.com
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 4673bb5c74b9..2f017a87ded8 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -1685,9 +1685,10 @@ static inline uint64_t x86_cpu_xsave_xss_components(X86CPU *cpu)
+  * Returns the set of feature flags that are supported and migratable by
+  * QEMU, for a given FeatureWord.
+  */
+-static uint64_t x86_cpu_get_migratable_flags(FeatureWord w)
++static uint64_t x86_cpu_get_migratable_flags(X86CPU *cpu, FeatureWord w)
+ {
+     FeatureWordInfo *wi = &feature_word_info[w];
++    CPUX86State *env = &cpu->env;
+     uint64_t r = 0;
+     int i;
+ 
+@@ -1701,6 +1702,12 @@ static uint64_t x86_cpu_get_migratable_flags(FeatureWord w)
+             r |= f;
+         }
+     }
++
++    /* when tsc-khz is set explicitly, invtsc is migratable */
++    if ((w == FEAT_8000_0007_EDX) && env->user_tsc_khz) {
++        r |= CPUID_APM_INVTSC;
++    }
++
+     return r;
+ }
+ 
+@@ -6000,7 +6007,7 @@ uint64_t x86_cpu_get_supported_feature_word(X86CPU *cpu, FeatureWord w)
+     }
+ #endif
+     if (cpu && cpu->migratable) {
+-        r &= x86_cpu_get_migratable_flags(w);
++        r &= x86_cpu_get_migratable_flags(cpu, w);
+     }
+     return r;
+ }
+-- 
+2.33.0
+

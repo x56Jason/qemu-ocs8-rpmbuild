@@ -1,0 +1,109 @@
+From 65d900e07093d73f00d856e429055e6a41d542e0 Mon Sep 17 00:00:00 2001
+From: Xin Li <xin3.li@intel.com>
+Date: Wed, 8 Nov 2023 23:20:07 -0800
+Subject: [PATCH 1095/1109] target/i386: add support for FRED in CPUID
+ enumeration
+
+commit c1acad9f72d14daf918563eb77d2b31c39fbd06a upstream.
+
+FRED, i.e., the Intel flexible return and event delivery architecture,
+defines simple new transitions that change privilege level (ring
+transitions).
+
+The new transitions defined by the FRED architecture are FRED event
+delivery and, for returning from events, two FRED return instructions.
+FRED event delivery can effect a transition from ring 3 to ring 0, but
+it is used also to deliver events incident to ring 0.  One FRED
+instruction (ERETU) effects a return from ring 0 to ring 3, while the
+other (ERETS) returns while remaining in ring 0.  Collectively, FRED
+event delivery and the FRED return instructions are FRED transitions.
+
+In addition to these transitions, the FRED architecture defines a new
+instruction (LKGS) for managing the state of the GS segment register.
+The LKGS instruction can be used by 64-bit operating systems that do
+not use the new FRED transitions.
+
+WRMSRNS is an instruction that behaves exactly like WRMSR, with the
+only difference being that it is not a serializing instruction by
+default.  Under certain conditions, WRMSRNS may replace WRMSR to improve
+performance.  FRED uses it to switch RSP0 in a faster manner.
+
+Search for the latest FRED spec in most search engines with this search
+pattern:
+
+  site:intel.com FRED (flexible return and event delivery) specification
+
+The CPUID feature flag CPUID.(EAX=7,ECX=1):EAX[17] enumerates FRED, and
+the CPUID feature flag CPUID.(EAX=7,ECX=1):EAX[18] enumerates LKGS, and
+the CPUID feature flag CPUID.(EAX=7,ECX=1):EAX[19] enumerates WRMSRNS.
+
+Add CPUID definitions for FRED/LKGS/WRMSRNS, and expose them to KVM guests.
+
+Because FRED relies on LKGS and WRMSRNS, add that to feature dependency
+map.
+
+Intel-SIG: commit c1acad9f72d1 target/i386: add support for FRED in CPUID enumeration
+
+Tested-by: Shan Kang <shan.kang@intel.com>
+Signed-off-by: Xin Li <xin3.li@intel.com>
+Message-ID: <20231109072012.8078-2-xin3.li@intel.com>
+[Fix order of dependencies, add dependencies from LM to FRED. - Paolo]
+Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Signed-off-by: Jason Zeng <jason.zeng@intel.com>
+---
+ target/i386/cpu.c | 14 +++++++++++++-
+ target/i386/cpu.h |  6 ++++++
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/target/i386/cpu.c b/target/i386/cpu.c
+index 62a120fe7eef..18150d471c1f 100644
+--- a/target/i386/cpu.c
++++ b/target/i386/cpu.c
+@@ -966,7 +966,7 @@ FeatureWordInfo feature_word_info[FEATURE_WORDS] = {
+             "avx-vnni", "avx512-bf16", NULL, "cmpccxadd",
+             NULL, NULL, "fzrm", "fsrs",
+             "fsrc", NULL, NULL, NULL,
+-            NULL, NULL, NULL, NULL,
++            NULL, "fred", "lkgs", "wrmsrns",
+             NULL, "amx-fp16", NULL, "avx-ifma",
+             NULL, NULL, "lam", NULL,
+             NULL, NULL, NULL, NULL,
+@@ -1553,6 +1553,18 @@ static FeatureDep feature_dependencies[] = {
+         .from = { FEAT_7_0_ECX,             CPUID_7_0_ECX_WAITPKG },
+         .to = { FEAT_VMX_SECONDARY_CTLS,    VMX_SECONDARY_EXEC_ENABLE_USER_WAIT_PAUSE },
+     },
++    {
++        .from = { FEAT_8000_0001_EDX,       CPUID_EXT2_LM },
++        .to = { FEAT_7_1_EAX,               CPUID_7_1_EAX_FRED },
++    },
++    {
++        .from = { FEAT_7_1_EAX,             CPUID_7_1_EAX_LKGS },
++        .to = { FEAT_7_1_EAX,               CPUID_7_1_EAX_FRED },
++    },
++    {
++        .from = { FEAT_7_1_EAX,             CPUID_7_1_EAX_WRMSRNS },
++        .to = { FEAT_7_1_EAX,               CPUID_7_1_EAX_FRED },
++    },
+ };
+ 
+ typedef struct X86RegisterInfo32 {
+diff --git a/target/i386/cpu.h b/target/i386/cpu.h
+index 9fc24f7e4c41..13274e14045e 100644
+--- a/target/i386/cpu.h
++++ b/target/i386/cpu.h
+@@ -940,6 +940,12 @@ uint64_t x86_cpu_get_supported_feature_word(FeatureWord w,
+ #define CPUID_7_1_EDX_AMX_COMPLEX       (1U << 8)
+ /* PREFETCHIT0/1 Instructions */
+ #define CPUID_7_1_EDX_PREFETCHITI       (1U << 14)
++/* Flexible return and event delivery (FRED) */
++#define CPUID_7_1_EAX_FRED              (1U << 17)
++/* Load into IA32_KERNEL_GS_BASE (LKGS) */
++#define CPUID_7_1_EAX_LKGS              (1U << 18)
++/* Non-Serializing Write to Model Specific Register (WRMSRNS) */
++#define CPUID_7_1_EAX_WRMSRNS           (1U << 19)
+ 
+ /* Do not exhibit MXCSR Configuration Dependent Timing (MCDT) behavior */
+ #define CPUID_7_2_EDX_MCDT_NO           (1U << 5)
+-- 
+2.33.0
+
